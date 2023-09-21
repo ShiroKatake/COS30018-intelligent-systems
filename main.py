@@ -1,17 +1,20 @@
-"""
-Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
-"""
 import math
 import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
+from data.data import get_lat_long_from_scats
 from keras.models import load_model
 from keras.utils import plot_model
 import sklearn.metrics as metrics
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
 warnings.filterwarnings("ignore")
+
+file1 = 'data/myData.csv'
+file2 = 'data/myData2.csv'
+timeInterval = 15
 
 
 def MAPE(y_true, y_pred):
@@ -38,7 +41,6 @@ def MAPE(y_true, y_pred):
     mape = sums * (100 / num)
 
     return mape
-
 
 def eva_regress(y_true, y_pred):
     """Evaluation
@@ -92,7 +94,52 @@ def plot_results(y_true, y_preds, names):
 
     plt.show()
 
+def predict_traffic_flow(latitude, longitude, time: float, model: str):
+    # Normalize the time by dividing it by the total minutes in a day (1440)
+    normalized_time = time / 1440 #this number should be same as minutesInData variable from data.py
+    
+    # Transform latitude and longitude using respective scalers
+    scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
+    scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
+    
+    # Prepare test data
+    X_test = np.array([[normalized_time, scaled_latitude, scaled_longitude]])
+    
+    # Reshape X_test based on the chosen model
+    if model in ['SAEs', 'My_model']:
+        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
+    else:
+        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
+    # Map the string name of the model to the actual model object
+    model_map = {
+        'lstm': lstm,
+        'gru': gru,
+        'saes': saes,
+        'my_model': my_model
+    }
+
+    # Select the desired model
+    selected_model = model_map.get(model.lower())
+    if selected_model is None:
+        raise ValueError(f"Unsupported model: {model}")
+
+    print(f"Select {model}")
+
+    # Predict using the selected model
+    predicted = selected_model.predict(X_test)
+
+    # Create a new array to structure the predictions
+    predicted_structure = np.zeros(shape=(len(predicted), 96))
+    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
+
+    # Transform the prediction using the y_scaler to get the actual prediction
+    final_prediction = y_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
+    
+    return final_prediction
+
+
+# Just temporarily this isnt doing anything
 def main():
     lstm = load_model('model/lstm.h5')
     gru = load_model('model/gru.h5')
@@ -124,5 +171,47 @@ def main():
     plot_results(y_test[: 288], y_preds, names)
 
 
+def initialise_models():
+    global lstm
+    global gru
+    global saes
+    global my_model
+    global y_scaler
+    global lat_scaler
+    global long_scaler
+
+    lstm = load_model('model/lstm.h5')
+    gru = load_model('model/gru.h5')
+    saes = load_model('model/saes.h5')
+    my_model = load_model('model/my_model.h5')
+    _, _, _, _, y_scaler, lat_scaler, long_scaler = process_data(file1, '', 0)
+
+def time_string_to_minute_of_day(time_str):
+    # Split the time string by the colon to get the hour and minute parts.
+    hour_str, minute_str = time_str.split(":")
+    
+    # Convert the hour and minute parts to integers.
+    hour = int(hour_str)
+    minute = int(minute_str)
+    
+    # Calculate the minute of the day.
+    minute_of_day = hour * 60 + minute
+    
+    return minute_of_day
+
 if __name__ == '__main__':
-    main()
+    initialise_models()
+    scats = input("What scats number to predict flow of?: ")
+    time = input("What time to predict? (e.g. 14:30): ")
+    lat, long = get_lat_long_from_scats(file1, scats)
+    
+    # Make prediction
+    lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
+    gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
+    saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
+    my_modelPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='my_model'))
+    print("lstm: " + lstmPrediction)
+    print("gru: " + gruPrediction)
+    print("saes: " + saesPrediction)
+    print("my_model: " + my_modelPrediction)
+

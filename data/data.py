@@ -1,40 +1,83 @@
-"""
-Processing the data
-"""
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+timeInterval = 15
+
+
+def get_lat_long_from_scats(data, scats):
+    # Read data
+    df = pd.read_csv(data, encoding='utf-8').fillna(0)
+
+    # Filter the DataFrame based on the SCATS number. Makes a new dataframe thats just got the values for that SCATS number
+    filtered_df = df[df['SCATS Number'] == int(scats)]
+
+    # Get the lat and long from the new table
+    lat = filtered_df['NB_LATITUDE'].iloc[0]
+    long = filtered_df['NB_LONGITUDE'].iloc[0]
+
+    return lat, long
 
 def process_data(train, test, lags):
-    """Process data
-    Reshape and split train\test data.
 
-    # Arguments
-        train: String, name of .csv train file.
-        test: String, name of .csv test file.
-        lags: integer, time lag.
-    # Returns
-        X_train: ndarray.
-        y_train: ndarray.
-        X_test: ndarray.
-        y_test: ndarray.
-        scaler: StandardScaler.
-    """
-    attr = 'Lane 1 Flow (Veh/5 Minutes)'
+    # Reading the CSV files and filling NaN with 0
     df1 = pd.read_csv(train, encoding='utf-8').fillna(0)
-    df2 = pd.read_csv(test, encoding='utf-8').fillna(0)
+    #df2 = pd.read_csv(test, encoding='utf-8').fillna(0)
 
-    # scaler = StandardScaler().fit(df1[attr].values)
-    scaler = MinMaxScaler(feature_range=(0, 1)).fit(df1[attr].values.reshape(-1, 1))
-    flow1 = scaler.transform(df1[attr].values.reshape(-1, 1)).reshape(1, -1)[0]
-    flow2 = scaler.transform(df2[attr].values.reshape(-1, 1)).reshape(1, -1)[0]
+    #Get the position of the first time column in the CSV
+    columnPositionOfTimeColumn = df1.columns.get_loc("V00")
 
+    flow1 = df1.to_numpy()[:, columnPositionOfTimeColumn:]
+    
+    numberOfTimeColumns = flow1.shape[1]
+
+    minutesInData = timeInterval * numberOfTimeColumns
+
+
+    nb_latitude = df1['NB_LATITUDE'].to_numpy().reshape(-1, 1)
+    nb_longitude = df1['NB_LONGITUDE'].to_numpy().reshape(-1, 1)
+
+    # Scaling using MinMaxScaler
+    flowScaler = MinMaxScaler(feature_range=(0, 1)).fit(flow1)
+    latitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_latitude)
+    longitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_longitude)
+
+    # Transform
+    flowScaled = flowScaler.transform(flow1)
+    nb_latitude = latitudeScaler.transform(nb_latitude)
+    nb_longitude = longitudeScaler.transform(nb_longitude)
+    
+    # Concatenate both lat and long into one
+    latitudeAndLongitude = np.concatenate((nb_latitude, nb_longitude), axis=1)
+
+    # Initializing empty lists for train and test data
     train, test = [], []
-    for i in range(lags, len(flow1)):
-        train.append(flow1[i - lags: i + 1])
-    for i in range(lags, len(flow2)):
-        test.append(flow2[i - lags: i + 1])
+
+    # Loop over the rows in the flowScaled 2D array.
+    for rowIndex in range(len(flowScaled)):
+        
+        # Loop over the number of time columns specified.
+        for timeColumn in range(numberOfTimeColumns):
+            
+            # If we're at the last time column, set the index to -1 (likely to get the last column).
+            # Otherwise, use the current timeColumn index.
+            flowColumnIndex = timeColumn if timeColumn != numberOfTimeColumns - 1 else -1
+            
+            # Scale the timeColumn value based on timeInterval and minutesInData.
+            timeScaled = timeColumn * timeInterval / minutesInData
+            
+            # Fetch the latitude and longitude for the current row.
+            latLong = latitudeAndLongitude[rowIndex]
+            
+            # Fetch the flow value for the current row and specified column.
+            # We add 1 to the flowColumnIndex, as the actual data starts one column ahead.
+            flowValue = flowScaled[rowIndex, flowColumnIndex + 1]
+            
+            # Concatenate the timeScaled, latLong, and flowValue to form a single row of inputData.
+            inputData = np.concatenate([[timeScaled], latLong, [flowValue]])
+
+            # Append this new row of inputData to the train list.
+            train.append(inputData)
 
     train = np.array(train)
     test = np.array(test)
@@ -42,7 +85,12 @@ def process_data(train, test, lags):
 
     X_train = train[:, :-1]
     y_train = train[:, -1]
-    X_test = test[:, :-1]
-    y_test = test[:, -1]
 
-    return X_train, y_train, X_test, y_test, scaler
+    X_test = None
+    y_test = None
+
+    # X_test = test[:, :-1]
+    # y_test = test[:, -1]
+
+
+    return X_train, y_train, X_test, y_test, flowScaler, latitudeScaler, longitudeScaler

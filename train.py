@@ -10,8 +10,10 @@ from data.data import process_data
 from model import model
 from keras.models import Model
 from keras.callbacks import EarlyStopping
-warnings.filterwarnings("ignore")
+from main import file1
+from main import file2
 
+warnings.filterwarnings("ignore")
 
 def train_model(model, X_train, y_train, name, config):
     """train
@@ -85,27 +87,25 @@ def main(argv):
         help="Model to train.")
     args = parser.parse_args()
 
-    lag = 12
+    lag = 4 #THIS USED TO BE 12
     config = {"batch": 256, "epochs": 2}
-    file1 = 'data/train.csv'
-    file2 = 'data/test.csv'
-    X_train, y_train, _, _, _ = process_data(file1, file2, lag)
+    X_train, y_train, _, _, _, _, _ = process_data(file1, file2, lag)
 
     if args.model == 'my_model':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
-        m = model.get_my_model([12, 64, 64, 1])
+        m = model.get_my_model([3, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'lstm':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-        m = model.get_lstm([12, 64, 64, 1])
+        m = model.get_lstm([3, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'gru':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-        m = model.get_gru([12, 64, 64, 1])
+        m = model.get_gru([3, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'saes':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
-        m = model.get_saes([12, 400, 400, 400, 1])
+        m = model.get_saes([3, 400, 400, 400, 1])
         train_seas(m, X_train, y_train, args.model, config)
 
 
