@@ -1,9 +1,29 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import csv
 
 timeInterval = 15
 
+def get_all_scats_points(filename):
+    unique_values = []
+    with open(filename, 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+
+        # Skip the first row (header)
+        next(csvreader)
+        
+        # Iterate through each row in the CSV
+        for row in csvreader:
+            if row:  # Check if the row is not empty
+                # Extract the value from the first column
+                value = row[0]
+                
+                # Check if the value is not already in the list
+                if value not in unique_values:
+                    unique_values.append(value)
+
+    return unique_values
 
 def get_lat_long_from_scats(data, scats):
     # Read data

@@ -9,6 +9,7 @@ import pandas as pd
 from data.data import process_data
 from model import model
 from keras.models import Model
+from keras.optimizers import SGD
 from keras.callbacks import EarlyStopping
 from main import file1
 from main import file2
@@ -27,7 +28,7 @@ def train_model(model, X_train, y_train, name, config):
         config: Dict, parameter for train.
     """
 
-    model.compile(loss="mse", optimizer="rmsprop", metrics=['mape'])
+    model.compile(loss="mse", optimizer=SGD(learning_rate=1e-7, momentum=0.9), metrics=['mape'])
     # early = EarlyStopping(monitor='val_loss', patience=30, verbose=0, mode='auto')
     hist = model.fit(
         X_train, y_train,
@@ -91,9 +92,9 @@ def main(argv):
     config = {"batch": 256, "epochs": 2}
     X_train, y_train, _, _, _, _, _ = process_data(file1, file2, lag)
 
-    if args.model == 'my_model':
+    if args.model == 'nn':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
-        m = model.get_my_model([3, 64, 64, 1])
+        m = model.get_nn([3, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'lstm':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
