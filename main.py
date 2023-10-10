@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
-from data.data import get_lat_long_from_scats
+from data.data import get_lat_long_from_scats, get_all_scats_points
 from keras.models import load_model
 from keras.utils import plot_model
 import sklearn.metrics as metrics
@@ -201,17 +201,26 @@ def time_string_to_minute_of_day(time_str):
 
 if __name__ == '__main__':
     initialise_models()
-    scats = input("What scats number to predict flow of?: ")
-    time = input("What time to predict? (e.g. 14:30): ")
-    lat, long = get_lat_long_from_scats(file1, scats)
+    scats_points = get_all_scats_points(file1)
     
-    # Make prediction
-    lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
-    gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
-    saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
-    my_modelPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='my_model'))
-    print("lstm: " + lstmPrediction)
-    print("gru: " + gruPrediction)
-    print("saes: " + saesPrediction)
-    print("my_model: " + my_modelPrediction)
+    time = input("What time to predict? (e.g. 14:30): ")
 
+    result = {}
+
+    for scat in scats_points:
+        lat, long = get_lat_long_from_scats(file1, scat)
+
+        # Make prediction
+        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
+        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
+        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
+        my_modelPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='my_model'))
+
+        result[scat] = {
+            'lstm': lstmPrediction,
+            'gru': gruPrediction,
+            'saes': saesPrediction,
+            'nn': my_modelPrediction
+        }
+
+    print(result)
