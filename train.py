@@ -92,7 +92,7 @@ def main(argv):
     config = {"batch": 256, "epochs": 2}
     X_train, y_train, _, _, _, _, _ = process_data(file1, file2, lag)
 
-    if args.model == 'my_model':
+    if args.model == 'nn':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
         m = model.get_nn([3, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
