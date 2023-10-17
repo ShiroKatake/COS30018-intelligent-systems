@@ -65,8 +65,12 @@ def _get_sae(inputs, hidden, output):
     """
 
     model = Sequential()
+    model.add(Dense(inputs, name='encoder'))
+    model.add(Activation('relu'))
+
     model.add(Dense(hidden, input_dim=inputs, name='hidden'))
-    model.add(Activation('sigmoid'))
+    model.add(Activation('relu'))
+
     model.add(Dropout(0.2))
     model.add(Dense(output, activation='sigmoid'))
 
