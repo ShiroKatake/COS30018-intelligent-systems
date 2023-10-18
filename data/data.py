@@ -5,6 +5,24 @@ import csv
 
 timeInterval = 15
 
+def get_all_scats_neighbors(data):
+    df = pd.read_csv(data, encoding='utf-8').fillna(0)
+    scats_neighbours_dict = {}
+
+    for _, row in df.iterrows():
+        scats_number = row['SCATS Number']
+        neighbors = row['NEIGHBOURS']
+        lat = row['NB_LATITUDE']
+        long = row['NB_LONGITUDE']
+        neighbors_list = neighbors.split(';') if neighbors else []
+        scats_neighbours_dict[scats_number] = {
+            'lat': lat,
+            'long': long,
+            'neighbors': neighbors_list
+        }
+
+    return scats_neighbours_dict
+
 def get_all_scats_points(filename):
     unique_values = []
     with open(filename, 'r') as csvfile:
@@ -22,7 +40,7 @@ def get_all_scats_points(filename):
                 # Check if the value is not already in the list
                 if value not in unique_values:
                     unique_values.append(value)
-
+    print(unique_values)
     return unique_values
 
 def get_lat_long_from_scats(data, scats):
