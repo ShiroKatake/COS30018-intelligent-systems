@@ -5,8 +5,17 @@ import csv
 
 timeInterval = 15
 
-def get_all_scats_neighbors(data):
-    df = pd.read_csv(data, encoding='utf-8').fillna(0)
+class Scat:
+    def __init__(self, number, lat, long, flow, neighbors):
+        self.number = number
+        self.lat = lat
+        self.long = long
+        self.flow = flow
+        self.neighbors = neighbors
+        
+    def __eq__(self, other):
+        return self.lat == other.lat and self.long == other.long
+
     scats_neighbours_dict = {}
 
     for _, row in df.iterrows():
