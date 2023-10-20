@@ -10,6 +10,8 @@ import sklearn.metrics as metrics
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+from map.map import get_routes
+
 warnings.filterwarnings("ignore")
 
 file1 = 'data/myData.csv'
@@ -210,20 +212,19 @@ if __name__ == '__main__':
     time = input("What time to predict? (e.g. 14:30): ") or "14:30"
     model = input("What model to use? (lstm, gru, saes, nn): ") or "nn"
 
-    for scat in scats_points:
-        lat, long = get_lat_long_from_scats(file1, scat)
+    for scat in scat_data:
+        lat = scat_data[scat].lat
+        long = scat_data[scat].long
 
         # Make prediction
-        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
-        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
-        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
-        nnPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='nn'))
+        flow_prediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model=model))
 
-        result[scat] = {
-            'lstm': lstmPrediction,
-            'gru': gruPrediction,
-            'saes': saesPrediction,
-            'nn': nnPrediction
-        }
+        scat_data[scat].flow = flow_prediction
 
-    print(result)
+    route, travel_time = get_routes(scat_data, start_scat, end_scat)
+    response = [{
+        "route": route,
+        "travel_time": travel_time
+    }] # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+
+    print(response)
