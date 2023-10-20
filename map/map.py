@@ -23,3 +23,27 @@ def flow_to_speed(flow):
     speed = min((-B - math.sqrt(B**2 - 4 * A * float(flow))) / 2 * A, 60) # The speed limit in this area is 60 km/h
 
     return speed
+
+def get_total_g_cost(start_node, current_node):
+    cost_g = current_node.g
+    while current_node != start_node:
+        cost_g += get_arrival_minutes(current_node.data, current_node.parent.data)
+        current_node = current_node.parent
+    return cost_g
+
+def get_total_h_cost(current_node, end_node):
+    cost_h = get_arrival_minutes(current_node.data, end_node.data)
+    return cost_h
+
+def get_arrival_minutes(start_scat, end_scat):
+    distance = get_distances(start_scat, end_scat)   # km
+
+    # We only care about start flow and not end flow because that's
+    # the flow the user will be travelling through to get to the end scat
+    time_hours = distance / flow_to_speed(start_scat.flow) # km/h
+
+    time_minutes = time_hours * 60
+    return time_minutes + 0.5 # We assume there's an average of 30s delay (traffic lights) to pass through any intersection
+
+def get_distances(scat1, scat2):
+    return distance.distance((scat1.lat, scat1.long), (scat2.lat, scat2.long)).km
