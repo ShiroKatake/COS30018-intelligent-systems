@@ -204,6 +204,11 @@ if __name__ == '__main__':
     
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
     
+    start_scat = input("What scat number to start from? (e.g. 970): ") or "970"
+    end_scat = input("What scat number to end at? (e.g. 2827): ") or "2827"
+    # date = input("What date to predict? (e.g. 2016-3-4): ") # Convert this to just the day of the month to output true data of oct to compare
+    time = input("What time to predict? (e.g. 14:30): ") or "14:30"
+    model = input("What model to use? (lstm, gru, saes, nn): ") or "nn"
 
     for scat in scats_points:
         lat, long = get_lat_long_from_scats(file1, scat)
