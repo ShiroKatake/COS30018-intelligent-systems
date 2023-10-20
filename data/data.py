@@ -6,8 +6,9 @@ import csv
 timeInterval = 15
 
 class Scat:
-    def __init__(self, number, lat, long, flow, neighbors):
+    def __init__(self, number, name, lat, long, flow, neighbors):
         self.number = number
+        self.name = name
         self.lat = lat
         self.long = long
         self.flow = flow
@@ -15,6 +16,15 @@ class Scat:
         
     def __eq__(self, other):
         return self.lat == other.lat and self.long == other.long
+    
+    def print(self):
+        return({
+            self.number: {
+                'name': self.name,
+                'lat': self.lat,
+                'long': self.long,
+            }
+        })
 
 def get_scats_dict(file_path):
     df = pd.read_csv(file_path, encoding='utf-8').fillna(0)
@@ -22,11 +32,12 @@ def get_scats_dict(file_path):
 
     for _, row in df.iterrows():
         scats_number = str(row['SCATS Number']) # SCAT numbers needs to be universally strings for easy input and look up
+        name = row['NAME']
         neighbors = row['NEIGHBOURS']
         lat = row['NB_LATITUDE']
         long = row['NB_LONGITUDE']
         neighbors_list = neighbors.split(';') if neighbors else []
-        scats_neighbours_dict[scats_number] = Scat(scats_number, lat, long, 0, neighbors_list)
+        scats_neighbours_dict[scats_number] = Scat(scats_number, name, lat, long, 0, neighbors_list)
 
     return scats_neighbours_dict
 

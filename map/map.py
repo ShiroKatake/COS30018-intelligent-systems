@@ -69,12 +69,7 @@ def get_routes(graph, start_scat_number, end_scat_number):
     current = current_node
     travel_time = current.g
     while current is not None:
-        path.append({
-            current.data.number: {
-                'lat': current.data.lat,
-                'long': current.data.long
-            }
-        })
+        path.append(current.data.print())
         current = current.parent
 
     return path[::-1], travel_time # The path was found in reverse, so we need to change it back
