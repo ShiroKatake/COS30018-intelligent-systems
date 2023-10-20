@@ -16,19 +16,17 @@ class Scat:
     def __eq__(self, other):
         return self.lat == other.lat and self.long == other.long
 
+def get_scats_dict(file_path):
+    df = pd.read_csv(file_path, encoding='utf-8').fillna(0)
     scats_neighbours_dict = {}
 
     for _, row in df.iterrows():
-        scats_number = row['SCATS Number']
+        scats_number = str(row['SCATS Number']) # SCAT numbers needs to be universally strings for easy input and look up
         neighbors = row['NEIGHBOURS']
         lat = row['NB_LATITUDE']
         long = row['NB_LONGITUDE']
         neighbors_list = neighbors.split(';') if neighbors else []
-        scats_neighbours_dict[scats_number] = {
-            'lat': lat,
-            'long': long,
-            'neighbors': neighbors_list
-        }
+        scats_neighbours_dict[scats_number] = Scat(scats_number, lat, long, 0, neighbors_list)
 
     return scats_neighbours_dict
 

@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
-from data.data import get_lat_long_from_scats, get_all_scats_points
+from data.data import get_scats_dict
 from keras.models import load_model
 from keras.utils import plot_model
 import sklearn.metrics as metrics
@@ -201,11 +201,9 @@ def time_string_to_minute_of_day(time_str):
 
 if __name__ == '__main__':
     initialise_models()
-    scats_points = get_all_scats_points(file1)
     
-    time = input("What time to predict? (e.g. 14:30): ")
-
-    result = {}
+    scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
+    
 
     for scat in scats_points:
         lat, long = get_lat_long_from_scats(file1, scat)
