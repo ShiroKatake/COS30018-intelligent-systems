@@ -12,6 +12,73 @@ class Node:
     def __eq__(self, other):
         return self.data == other.data
 
+# We use A* to find the shortest path, this will also give us
+# the total travel time from start to end
+def get_routes(graph, start_scat_number, end_scat_number):
+    start_scat = graph[start_scat_number]
+    end_scat = graph[end_scat_number]
+
+    start_node = Node(start_scat, None, 0, 0)
+    end_node = Node(end_scat, None, 0, 0)
+
+    to_search_list = [start_node]
+    have_searched_list = []
+
+    while len(to_search_list):
+        current_node = to_search_list[0]
+
+        # Find the node with the lowest f cost in the search list
+        for scat in to_search_list:
+            if scat.f < current_node.f or scat.h < current_node.h:
+                current_node = scat
+
+        
+        # Then remove it and add it to the closed list
+        to_search_list.remove(current_node)
+        have_searched_list.append(current_node)
+
+        # Stop search if we've reached the end
+        if current_node == end_node:
+            break
+
+        neighboring_scats = current_node.data.neighbors
+        for scat_number in neighboring_scats:
+
+            # Convert the neighboring Scat into a neighboring Node
+            potential_end_node = Node(graph[scat_number], None, 0, 0)
+
+            # If the neighbor has already been searched, skip
+            if potential_end_node in have_searched_list:
+                continue
+
+            # Else find the costs and add it to the search list to expand later
+            potential_end_node.parent = current_node
+            potential_end_node.g = get_total_g_cost(start_node, potential_end_node)
+            potential_end_node.h = get_total_h_cost(potential_end_node, end_node)
+            potential_end_node.f = potential_end_node.g + potential_end_node.h
+
+            for scat in to_search_list:
+                # If this new cost is worse tho, we'll disregard it
+                if potential_end_node == scat and potential_end_node.g > get_total_g_cost(start_node, scat):
+                    continue
+                
+            to_search_list.append(potential_end_node)
+
+    # Output the path
+    path = []
+    current = current_node
+    travel_time = current.g
+    while current is not None:
+        path.append({
+            current.data.number: {
+                'lat': current.data.lat,
+                'long': current.data.long
+            }
+        })
+        current = current.parent
+
+    return path[::-1], travel_time # The path was found in reverse, so we need to change it back
+
 # Developed by previous COS30018 students (Coulter, Burns, and Henkel)
 def flow_to_speed(flow):
     A = -1000/32**2     # We assume that the speed at capacity is 32 km/h
