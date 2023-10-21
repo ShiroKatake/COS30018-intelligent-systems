@@ -82,7 +82,7 @@ def flow_to_speed(flow):
     # We also assume that the traffic will always be under capacity
     # due to lack of sufficient data confirming whether the traffic was under or over capacity,
     # and most of the day the traffic is assumed to be under capacity
-    speed = min((-B - math.sqrt(B**2 - 4 * A * float(flow))) / 2 * A, 60) # The speed limit in this area is 60 km/h
+    speed = min((-B - math.sqrt(B**2 - 4 * A * -float(flow))) / (2 * A), 60) # The speed limit in this area is 60 km/h
 
     return speed
 
