@@ -62,6 +62,16 @@ def process_data(train, test, lags):
     df1 = pd.read_csv(train, encoding='utf-8').fillna(0)
     #df2 = pd.read_csv(test, encoding='utf-8').fillna(0)
 
+    # Parsing the 'Date' column
+    df1['Date'] = pd.to_datetime(df1['Date'], format='%d/%m/%Y')
+
+    # Extracting the day of the week, represented as an integer where Monday=0 and Sunday=6
+    df1['DayOfWeek'] = df1['Date'].dt.dayofweek
+
+    # Scaling the DayOfWeek
+    dayOfWeekScaler = StandardScaler()
+    df1['DayOfWeekScaled'] = dayOfWeekScaler.fit_transform(df1['DayOfWeek'].values.reshape(-1, 1))
+
     #Get the position of the first time column in the CSV
     columnPositionOfTimeColumn = df1.columns.get_loc("V00")
 
@@ -76,10 +86,9 @@ def process_data(train, test, lags):
     nb_longitude = df1['NB_LONGITUDE'].to_numpy().reshape(-1, 1)
 
     # Scaling using MinMaxScaler
-    flowScaler = MinMaxScaler(feature_range=(0, 1)).fit(flow1)
+    flowScaler = StandardScaler().fit(flow1)
     latitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_latitude)
     longitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_longitude)
-
     # Transform
     flowScaled = flowScaler.transform(flow1)
     nb_latitude = latitudeScaler.transform(nb_latitude)
@@ -111,8 +120,12 @@ def process_data(train, test, lags):
             # We add 1 to the flowColumnIndex, as the actual data starts one column ahead.
             flowValue = flowScaled[rowIndex, flowColumnIndex + 1]
             
-            # Concatenate the timeScaled, latLong, and flowValue to form a single row of inputData.
-            inputData = np.concatenate([[timeScaled], latLong, [flowValue]])
+            # Fetch the scaled day of the week for the current row.
+            dayOfWeekValue = df1['DayOfWeekScaled'].iloc[rowIndex]
+
+            # Concatenate the timeScaled, latLong, flowValue, and dayOfWeekValue to form a single row of inputData.
+            inputData = np.concatenate([[timeScaled], latLong, [flowValue], [dayOfWeekValue]])
+
 
             # Append this new row of inputData to the train list.
             train.append(inputData)

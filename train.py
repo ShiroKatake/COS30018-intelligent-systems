@@ -89,24 +89,24 @@ def main(argv):
     args = parser.parse_args()
 
     lag = 4 #THIS USED TO BE 12
-    config = {"batch": 256, "epochs": 2}
+    config = {"batch": 256, "epochs": 1}
     X_train, y_train, _, _, _, _, _ = process_data(file1, file2, lag)
 
     if args.model == 'nn':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
-        m = model.get_nn([3, 64, 64, 1])
+        m = model.get_nn([4, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'lstm':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-        m = model.get_lstm([3, 64, 64, 1])
+        m = model.get_lstm([4, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'gru':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-        m = model.get_gru([3, 64, 64, 1])
+        m = model.get_gru([4, 64, 64, 1])
         train_model(m, X_train, y_train, args.model, config)
     if args.model == 'saes':
         X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1]))
-        m = model.get_saes([3, 400, 400, 400, 1])
+        m = model.get_saes([4, 400, 400, 400, 1])
         train_seas(m, X_train, y_train, args.model, config)
 
 
