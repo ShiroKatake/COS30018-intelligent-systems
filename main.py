@@ -203,7 +203,8 @@ if __name__ == '__main__':
     initialise_models()
     scats_points = get_all_scats_points(file1)
     
-    time = input("What time to predict? (e.g. 14:30): ")
+    time = input("What time to predict? (e.g. 14:30): ") or "14:30"
+    date = input("Date to predict (e.g. 14/10/2023): ") or "14/10/2023"
 
     result = {}
 
