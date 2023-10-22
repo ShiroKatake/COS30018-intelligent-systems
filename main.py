@@ -132,12 +132,8 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     # Predict using the selected model
     predicted = selected_model.predict(x_test)
 
-    # Create a new array to structure the predictions
-    predicted_structure = np.zeros(shape=(len(predicted), 96))
-    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
-
-    # Transform the prediction using the y_scaler to get the actual prediction
-    final_prediction = y_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
+    # Transform the prediction using the flow_scaler to get the actual prediction
+    final_prediction = flow_scaler.inverse_transform(predicted)
     
     return final_prediction
 
@@ -179,7 +175,7 @@ def initialise_models():
     global gru
     global saes
     global nn
-    global y_scaler
+    global flow_scaler
     global lat_scaler
     global long_scaler
 
@@ -187,7 +183,7 @@ def initialise_models():
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
     nn = load_model('model/nn.h5')
-    _, _, _, _, y_scaler, lat_scaler, long_scaler = process_data(file1, '', 0)
+    _, _, flow_scaler, lat_scaler, long_scaler = process_data()
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
