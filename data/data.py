@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import csv
@@ -56,79 +55,44 @@ def get_lat_long_from_scats(data, scats):
 
     return lat, long
 
-def process_data(train, test, lags):
+def process_data():
+    # Read the dataset and fill empty values with 0
+    df = pd.read_csv('data/myData.csv', encoding='utf-8').fillna(0)
 
-    # Reading the CSV files and filling NaN with 0
-    df1 = pd.read_csv(train, encoding='utf-8').fillna(0)
-    #df2 = pd.read_csv(test, encoding='utf-8').fillna(0)
+    df['Date'] = pd.to_datetime(df['Date'], format='%d/%m/%Y')  # Convert date column to datetime
+    df['Day Of Week'] = df['Date'].dt.dayofweek  # Extract the day of the week. Yes we have the Weeknum column, but we want to use a standardalized method (0-6, mon to sun)
 
-    #Get the position of the first time column in the CSV
-    columnPositionOfTimeColumn = df1.columns.get_loc("V00")
+    # Dropping non-relevant data
+    df = df.drop(['SCATS Number', 'Location', 'CD_MELWAY', 'HF VicRoads Internal', 'VR Internal Stat', 'VR Internal Loc', 'NB_TYPE_SURVEY', 'Date', 'Weeknum'], axis=1)
 
-    flow1 = df1.to_numpy()[:, columnPositionOfTimeColumn:]
-    
-    numberOfTimeColumns = flow1.shape[1]
+    # Transpose the 'V00' to 'V95' row and its value row into columns
+    # We're gonna turn time into a feature/input as well
+    df = df.melt(id_vars=['NB_LATITUDE', 'NB_LONGITUDE', 'Day Of Week'], var_name='Time', value_name='Flow')
+    df['Time'] = df['Time'].str.replace('V', '').astype(int)
 
-    minutesInData = timeInterval * numberOfTimeColumns
+    # Normalize the time slots from 0 to 1 instead of 0 to 95 to avoid overfitting
+    df['Time'] = MinMaxScaler(feature_range=(0, 1)).fit_transform(df['Time'].values.reshape(-1, 1))
 
+    # Standardize the traffic flow, but save the scaler.
+    # When we make a prediction, the value that comes out will also be scaled,
+    flow_scaler = StandardScaler() # So we'll need this later to "undo" the scaling
+    df['Flow'] = flow_scaler.fit_transform(df['Flow'].values.reshape(-1, 1))
 
-    nb_latitude = df1['NB_LATITUDE'].to_numpy().reshape(-1, 1)
-    nb_longitude = df1['NB_LONGITUDE'].to_numpy().reshape(-1, 1)
+    # Standardize lat, long values to avoid overfitting
+    lat_scaler = StandardScaler() # We also keep the scaler for lat and long so we can scale the input of new values
+    df['NB_LATITUDE'] = lat_scaler.fit_transform(df['NB_LATITUDE'].values.reshape(-1, 1))
 
-    # Scaling using MinMaxScaler
-    flowScaler = MinMaxScaler(feature_range=(0, 1)).fit(flow1)
-    latitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_latitude)
-    longitudeScaler = MinMaxScaler(feature_range=(0, 1)).fit(nb_longitude)
+    long_scaler = StandardScaler()
+    df['NB_LONGITUDE'] = long_scaler.fit_transform(df['NB_LONGITUDE'].values.reshape(-1, 1))
 
-    # Transform
-    flowScaled = flowScaler.transform(flow1)
-    nb_latitude = latitudeScaler.transform(nb_latitude)
-    nb_longitude = longitudeScaler.transform(nb_longitude)
-    
-    # Concatenate both lat and long into one
-    latitudeAndLongitude = np.concatenate((nb_latitude, nb_longitude), axis=1)
+    # Reset the index, this newly modified dataframe is what we'll be working with
+    df.reset_index(drop=True, inplace=True)
 
-    # Initializing empty lists for train and test data
-    train, test = [], []
+    # Get the input and target data
+    x_train = df[['NB_LATITUDE', 'NB_LONGITUDE', 'Day Of Week', 'Time']].values
+    y_train = df['Flow'].values
 
-    # Loop over the rows in the flowScaled 2D array.
-    for rowIndex in range(len(flowScaled)):
-        
-        # Loop over the number of time columns specified.
-        for timeColumn in range(numberOfTimeColumns):
-            
-            # If we're at the last time column, set the index to -1 (likely to get the last column).
-            # Otherwise, use the current timeColumn index.
-            flowColumnIndex = timeColumn if timeColumn != numberOfTimeColumns - 1 else -1
-            
-            # Scale the timeColumn value based on timeInterval and minutesInData.
-            timeScaled = timeColumn * timeInterval / minutesInData
-            
-            # Fetch the latitude and longitude for the current row.
-            latLong = latitudeAndLongitude[rowIndex]
-            
-            # Fetch the flow value for the current row and specified column.
-            # We add 1 to the flowColumnIndex, as the actual data starts one column ahead.
-            flowValue = flowScaled[rowIndex, flowColumnIndex + 1]
-            
-            # Concatenate the timeScaled, latLong, and flowValue to form a single row of inputData.
-            inputData = np.concatenate([[timeScaled], latLong, [flowValue]])
+    # Reshape the input data for RNN
+    x_train = x_train.reshape(x_train.shape[0], 4, 1)
 
-            # Append this new row of inputData to the train list.
-            train.append(inputData)
-
-    train = np.array(train)
-    test = np.array(test)
-    np.random.shuffle(train)
-
-    X_train = train[:, :-1]
-    y_train = train[:, -1]
-
-    X_test = None
-    y_test = None
-
-    # X_test = test[:, :-1]
-    # y_test = test[:, -1]
-
-
-    return X_train, y_train, X_test, y_test, flowScaler, latitudeScaler, longitudeScaler
+    return x_train, y_train, flow_scaler, lat_scaler, long_scaler
