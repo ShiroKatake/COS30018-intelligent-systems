@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 import warnings
 import numpy as np
 import pandas as pd
@@ -94,22 +95,24 @@ def plot_results(y_true, y_preds, names):
 
     plt.show()
 
-def predict_traffic_flow(latitude, longitude, time: float, model: str):
+def predict_traffic_flow(latitude, longitude, time, date, model):
+    # Convert date to day of week
+    date = datetime.strptime(date,'%d/%m/%Y')
+    day_of_week = date.weekday()
+
     # Normalize the time by dividing it by the total minutes in a day (1440)
-    normalized_time = time / 1440 #this number should be same as minutesInData variable from data.py
+    normalized_time = time / 1440 # This number should be same as df['Time'] in data.py
     
     # Transform latitude and longitude using respective scalers
     scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
     scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
-    
+
     # Prepare test data
-    X_test = np.array([[normalized_time, scaled_latitude, scaled_longitude]])
+    x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
     
-    # Reshape X_test based on the chosen model
-    if model in ['SAEs', 'nn']:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
-    else:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    # Reshape x_test based on the chosen model
+    if model in ['SAEs']:
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
 
     # Map the string name of the model to the actual model object
     model_map = {
@@ -127,7 +130,7 @@ def predict_traffic_flow(latitude, longitude, time: float, model: str):
     print(f"Select {model}")
 
     # Predict using the selected model
-    predicted = selected_model.predict(X_test)
+    predicted = selected_model.predict(x_test)
 
     # Create a new array to structure the predictions
     predicted_structure = np.zeros(shape=(len(predicted), 96))
@@ -212,10 +215,10 @@ if __name__ == '__main__':
         lat, long = get_lat_long_from_scats(file1, scat)
 
         # Make prediction
-        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
-        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
-        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
-        nnPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='nn'))
+        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='lstm'))
+        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='gru'))
+        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='saes'))
+        nnPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='nn'))
 
         result[scat] = {
             'lstm': lstmPrediction,
