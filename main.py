@@ -1,9 +1,11 @@
 import math
+from datetime import datetime
 import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
 from data.data import get_scats_dict
+from data.data import get_lat_long_from_scats, get_all_scats_points
 from keras.models import load_model
 from keras.utils import plot_model
 import sklearn.metrics as metrics
@@ -96,22 +98,24 @@ def plot_results(y_true, y_preds, names):
 
     plt.show()
 
-def predict_traffic_flow(latitude, longitude, time: float, model: str):
+def predict_traffic_flow(latitude, longitude, time, date, model):
+    # Convert date to day of week
+    date = datetime.strptime(date,'%d/%m/%Y')
+    day_of_week = date.weekday()
+
     # Normalize the time by dividing it by the total minutes in a day (1440)
-    normalized_time = time / 1440 #this number should be same as minutesInData variable from data.py
+    normalized_time = time / 1440 # This number should be same as df['Time'] in data.py
     
     # Transform latitude and longitude using respective scalers
     scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
     scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
-    
+
     # Prepare test data
-    X_test = np.array([[normalized_time, scaled_latitude, scaled_longitude]])
+    x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
     
-    # Reshape X_test based on the chosen model
-    if model in ['SAEs', 'nn']:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
-    else:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    # Reshape x_test based on the chosen model
+    if model in ['SAEs']:
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
 
     # Map the string name of the model to the actual model object
     model_map = {
@@ -129,14 +133,10 @@ def predict_traffic_flow(latitude, longitude, time: float, model: str):
     print(f"Select {model}")
 
     # Predict using the selected model
-    predicted = selected_model.predict(X_test)
+    predicted = selected_model.predict(x_test)
 
-    # Create a new array to structure the predictions
-    predicted_structure = np.zeros(shape=(len(predicted), 96))
-    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
-
-    # Transform the prediction using the y_scaler to get the actual prediction
-    final_prediction = y_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
+    # Transform the prediction using the flow_scaler to get the actual prediction
+    final_prediction = flow_scaler.inverse_transform(predicted)
     
     return final_prediction
 
@@ -178,7 +178,7 @@ def initialise_models():
     global gru
     global saes
     global nn
-    global y_scaler
+    global flow_scaler
     global lat_scaler
     global long_scaler
 
@@ -186,7 +186,7 @@ def initialise_models():
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
     nn = load_model('model/nn.h5')
-    _, _, _, _, y_scaler, lat_scaler, long_scaler = process_data(file1, '', 0)
+    _, _, flow_scaler, lat_scaler, long_scaler = process_data()
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
@@ -203,28 +203,56 @@ def time_string_to_minute_of_day(time_str):
 
 if __name__ == '__main__':
     initialise_models()
+    scats_points = get_all_scats_points(file1)
     
-    scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
-    
-    start_scat = input("What scat number to start from? (e.g. 970): ") or "970"
-    end_scat = input("What scat number to end at? (e.g. 2827): ") or "2827"
-    # date = input("What date to predict? (e.g. 2016-3-4): ") # Convert this to just the day of the month to output true data of oct to compare
     time = input("What time to predict? (e.g. 14:30): ") or "14:30"
-    model = input("What model to use? (lstm, gru, saes, nn): ") or "nn"
+    date = input("Date to predict (e.g. 14/10/2023): ") or "14/10/2023"
 
-    for scat in scat_data:
-        lat = scat_data[scat].lat
-        long = scat_data[scat].long
+    result = {}
+
+    for scat in scats_points:
+        lat, long = get_lat_long_from_scats(file1, scat)
 
         # Make prediction
-        flow_prediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model=model))
+        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='lstm'))
+        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='gru'))
+        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='saes'))
+        nnPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(time), model='nn'))
 
-        scat_data[scat].flow = flow_prediction
+        result[scat] = {
+            'lstm': lstmPrediction,
+            'gru': gruPrediction,
+            'saes': saesPrediction,
+            'nn': nnPrediction
+        }
 
-    route, travel_time = get_routes(scat_data, start_scat, end_scat)
-    response = [{
-        "route": route,
-        "travel_time": travel_time
-    }] # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+    print(result)
 
-    print(response)
+
+# if __name__ == '__main__':
+#     initialise_models()
+    
+#     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
+    
+#     start_scat = input("What scat number to start from? (e.g. 970): ") or "970"
+#     end_scat = input("What scat number to end at? (e.g. 2827): ") or "2827"
+#     # date = input("What date to predict? (e.g. 2016-3-4): ") # Convert this to just the day of the month to output true data of oct to compare
+#     time = input("What time to predict? (e.g. 14:30): ") or "14:30"
+#     model = input("What model to use? (lstm, gru, saes, nn): ") or "nn"
+
+#     for scat in scat_data:
+#         lat = scat_data[scat].lat
+#         long = scat_data[scat].long
+
+#         # Make prediction
+#         flow_prediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model=model))
+
+#         scat_data[scat].flow = flow_prediction
+
+#     route, travel_time = get_routes(scat_data, start_scat, end_scat)
+#     response = [{
+#         "route": route,
+#         "travel_time": travel_time
+#     }] # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+
+#     print(response)

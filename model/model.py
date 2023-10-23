@@ -1,17 +1,15 @@
 """
 Defination of NN model
 """
-from keras.layers import InputLayer, Dense, Dropout, Activation, LSTM, GRU
+from keras.layers import SimpleRNN, Dense, Dropout, Activation, LSTM, GRU
 from keras.models import Sequential
 
 def get_nn(units):
     model = Sequential()
-    model.add(InputLayer(units[0]))
-    model.add(Dense(units[1], activation="relu"))
+    model.add(SimpleRNN(units[1], input_shape=(units[0], 1), return_sequences=True))
+    model.add(SimpleRNN(units[2]))
     model.add(Dropout(0.2))
-    model.add(Dense(units[2], activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(units[3], activation="softmax"))
+    model.add(Dense(units[3], activation="sigmoid"))
     return model
 
 def get_lstm(units):
