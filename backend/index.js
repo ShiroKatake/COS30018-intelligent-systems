@@ -14,7 +14,7 @@ const executePython = async (script, args) => {
       ];
 
     // Execute python script
-    const py = spawn("python", [script, ...pyArgs]);
+    const py = spawn("python3", [script, ...pyArgs]);
 
     const result = await new Promise((resolve, reject) => {
         let output;
