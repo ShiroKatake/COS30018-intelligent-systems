@@ -45,7 +45,7 @@ document.getElementById("form").addEventListener("submit", async function () {
   
   const url = 'http://localhost:3001';
   
-  const routeInfo = await axios.post(url, null, {params})
+  const {data} = await axios.post(url, null, {params})
     .then(response => {
       console.log('Response:', response.data);
     })
@@ -59,6 +59,8 @@ document.getElementById("form").addEventListener("submit", async function () {
 
   // TODO: change this to be the model shit 
   // var fastestPathCoordinates = findFastestPath(startPoint, endPoint);
+
+  const routeInfo = data;
 
   // TODO: make 4 - 1 blue, 3 grey
   var path = L.polyline(routeInfo, { color: 'blue' }).addTo(map);

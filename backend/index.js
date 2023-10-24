@@ -3,6 +3,13 @@ const { spawn } = require("child_process");
 
 const app = express();
 
+app.use((_, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST");
+    res.set("Access-Control-Allow-Headers", "*");
+    next();
+  });
+
 const executePython = async (script, args) => {
     // Get args
     const pyArgs = [
@@ -14,7 +21,7 @@ const executePython = async (script, args) => {
       ];
 
     // Execute python script
-    const py = spawn("python3", [script, ...pyArgs]);
+    const py = spawn("python", [script, ...pyArgs]);
 
     const result = await new Promise((resolve, reject) => {
         let output;

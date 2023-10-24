@@ -232,6 +232,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
+    date_object = datetime.strptime(args.date, "%Y-%m-%d")
+    date = date_object.strftime("%d/%m/%Y")
 
     result = {}
 
@@ -239,7 +241,7 @@ if __name__ == '__main__':
         lat, long = get_lat_long_from_scats(file1, scat)
 
         # Make prediction
-        flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
+        flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(args.time), model=args.model)
         # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction[0][0]
 
