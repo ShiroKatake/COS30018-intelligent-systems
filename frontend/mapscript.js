@@ -45,7 +45,7 @@ document.getElementById("form").addEventListener("submit", async function () {
   
   const url = 'http://localhost:3001';
   
-  const routeInfo = await axios.post(url, _, {params})
+  const routeInfo = await axios.post(url, null, {params})
     .then(response => {
       console.log('Response:', response.data);
     })
