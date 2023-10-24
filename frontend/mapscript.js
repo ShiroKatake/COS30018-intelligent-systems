@@ -29,15 +29,15 @@ var currentRoute;
 document.getElementById("form").addEventListener("submit", async function () {
   event.preventDefault();
 
-  var startPoint = document.getElementById("start_scats").value;
-  var endPoint = document.getElementById("end_scats").value;
+  var startPoint = document.getElementById("start_scat").value;
+  var endPoint = document.getElementById("end_scat").value;
   var selectedModel = document.getElementById("model").value;
   var selectedTime = document.getElementById("time").value;
   var selectedDate = document.getElementById("date").value;
 
   const params = {
-    'start_scats': startPoint,
-    'end_scats': endPoint,
+    'start_scat': startPoint,
+    'end_scat': endPoint,
     'model': selectedModel,
     'time': selectedTime,
     'date': selectedDate
