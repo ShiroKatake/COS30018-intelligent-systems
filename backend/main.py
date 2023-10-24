@@ -137,7 +137,6 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     # Predict using the selected model
     predicted = selected_model.predict(x_test, verbose=None)
-    print(predicted.shape)
     # Transform the prediction using the flow_scaler to get the actual prediction
     final_prediction = flow_scaler.inverse_transform(predicted)
     
