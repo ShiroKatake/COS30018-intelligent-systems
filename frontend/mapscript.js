@@ -28,20 +28,19 @@ var currentRoute;
 
 document.getElementById("form").addEventListener("submit", async function () {
   event.preventDefault();
-  // const data = new FormData(this);
 
-  // var startPoint = document.getElementById("startScats").value;
-  // var endPoint = document.getElementById("endScats").value;
-  // var selectedModel = document.getElementById("models").value;
-  // var selectedTime = document.getElementById("time").value;
-  // var selectedDate = document.getElementById("date").value;
+  var startPoint = document.getElementById("start_scats").value;
+  var endPoint = document.getElementById("end_scats").value;
+  var selectedModel = document.getElementById("model").value;
+  var selectedTime = document.getElementById("time").value;
+  var selectedDate = document.getElementById("date").value;
 
   const params = {
-    'startScats': startScats,
-    'endScats': endScats,
-    'models': models,
-    'time': time,
-    'date': date
+    'start_scats': startPoint,
+    'end_scats': endPoint,
+    'model': selectedModel,
+    'time': selectedTime,
+    'date': selectedDate
   }
   
   const url = 'http://localhost:3001';
