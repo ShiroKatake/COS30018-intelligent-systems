@@ -15,6 +15,9 @@ class Node:
 # We use A* to find the shortest path, this will also give us
 # the total travel time from start to end
 def get_routes(graph, start_scat_number, end_scat_number):
+    result = []
+    route_count = 5
+    current_route = 1
     start_scat = graph[start_scat_number]
     end_scat = graph[end_scat_number]
 
@@ -32,14 +35,26 @@ def get_routes(graph, start_scat_number, end_scat_number):
             if scat.f < current_node.f or scat.h < current_node.h:
                 current_node = scat
 
+        # Stop search if we've reached the end
+        if current_node == end_node:
+            path = []
+            current = current_node
+            travel_time = current.g
+            while current is not None:
+                path.append(current.data.print())
+                current = current.parent
+
+            result.append({'route': path[::-1], 'travel_time': travel_time})
+            if current_route == route_count:
+                break
+            else:
+                to_search_list.remove(current_node)
+                current_route += 1
+                continue
         
         # Then remove it and add it to the closed list
         to_search_list.remove(current_node)
         have_searched_list.append(current_node)
-
-        # Stop search if we've reached the end
-        if current_node == end_node:
-            break
 
         neighboring_scats = current_node.data.neighbors
         for scat_number in neighboring_scats:
@@ -64,15 +79,7 @@ def get_routes(graph, start_scat_number, end_scat_number):
                 
             to_search_list.append(potential_end_node)
 
-    # Output the path
-    path = []
-    current = current_node
-    travel_time = current.g
-    while current is not None:
-        path.append(current.data.print())
-        current = current.parent
-
-    return path[::-1], travel_time # The path was found in reverse, so we need to change it back
+    return result # The path was found in reverse, so we need to change it back
 
 # Developed by previous COS30018 students (Coulter, Burns, and Henkel)
 def flow_to_speed(flow):
