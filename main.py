@@ -214,7 +214,7 @@ if __name__ == '__main__':
         help="Start scat number (default 970).")
     parser.add_argument(
         "--end_scat",
-        default="2827",
+        default="2820",
         help="End scat number (default 2827).")
     parser.add_argument(
         "--date",
