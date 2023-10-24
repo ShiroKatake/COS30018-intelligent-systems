@@ -35,9 +35,9 @@ def get_routes(graph, start_scat_number, end_scat_number):
             if scat.f < current_node.f or scat.h < current_node.h:
                 current_node = scat
 
-        # When the search has reached the end
+        # When the search has reached the end,
         if current_node == end_node:
-            # Save the path that it's found
+            # save the path that it's found
             path = []
             current = current_node
             travel_time = current.g
@@ -47,17 +47,17 @@ def get_routes(graph, start_scat_number, end_scat_number):
 
             result.append({'route': path[::-1], 'travel_time': travel_time})
 
-            # Stop search if we've had 5 routes
+            # stop search if we've had 5 routes
             if current_route == route_count:
                 break
 
-            # But continue if there can still be more
+            # but continue if there can still be more
             else:
                 to_search_list.remove(current_node) # We remove what would be the end node from the to_search list so line 39 can keep going
                 current_route += 1
                 continue
         
-        # Then remove it and add it to the closed list
+        # If the search hasn't reached the end, then this node will be searched, so add it to the have_searched_list
         to_search_list.remove(current_node)
         have_searched_list.append(current_node)
 
