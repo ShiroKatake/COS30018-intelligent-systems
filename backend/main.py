@@ -1,4 +1,5 @@
 import math
+import sys
 import json
 import argparse
 from datetime import datetime
@@ -239,10 +240,11 @@ if __name__ == '__main__':
 
         # Make prediction
         flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
-        print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction[0][0]
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
     
     print(json.dumps(response))
+    sys.stdout.flush()
