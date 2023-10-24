@@ -115,7 +115,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     # Prepare test data
     x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
-    
+    print(x_test.shape)
     # Reshape x_test based on the chosen model
     if model in ['SAEs']:
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
@@ -137,7 +137,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     # Predict using the selected model
     predicted = selected_model.predict(x_test, verbose=None)
-
+    print(predicted.shape)
     # Transform the prediction using the flow_scaler to get the actual prediction
     final_prediction = flow_scaler.inverse_transform(predicted)
     

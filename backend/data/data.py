@@ -1,6 +1,8 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import csv
+import numpy as np
+
 
 timeInterval = 15
 
@@ -73,16 +75,128 @@ def get_lat_long_from_scats(data, scats):
 
     return lat, long
 
-def process_data():
+def process_data(lags=12):
     # Read the dataset and fill empty values with 0
     df = pd.read_csv('data/myData.csv', encoding='utf-8').fillna(0)
 
+    
     df['Date'] = pd.to_datetime(df['Date'], format='%d/%m/%Y')  # Convert date column to datetime
-    df['Day Of Week'] = df['Date'].dt.dayofweek  # Extract the day of the week. Yes we have the Weeknum column, but we want to use a standardalized method (0-6, mon to sun)
+    #df['Day Of Week'] = df['Date'].dt.dayofweek  # Extract the day of the week. Yes we have the Weeknum column, but we want to use a standardalized method (0-6, mon to sun)
 
     # Dropping non-relevant data
-    df = df.drop(['SCATS Number', 'Location', 'CD_MELWAY', 'HF VicRoads Internal', 'VR Internal Stat', 'VR Internal Loc', 'NB_TYPE_SURVEY', 'Date', 'Weeknum'], axis=1)
+    df = df.drop(['SCATS Number', 'Location', 'CD_MELWAY', 'HF VicRoads Internal', 'VR Internal Stat', 'VR Internal Loc', 'NB_TYPE_SURVEY', 'Weeknum'], axis=1)
 
+    list_of_transformed_dfs = []
+    grouped = df.groupby(['NB_LATITUDE', 'NB_LONGITUDE'])
+    for _, group in grouped:
+        list_of_transformed_dfs.append(transform_group(group, lags))
+
+    df = pd.concat(list_of_transformed_dfs).reset_index(drop=True)
+
+    # Select the columns to be scaled (from 'V00' to the last column)
+    columns_to_scale = df.columns[df.columns.get_loc('V00'):]
+
+    flow_scaler = MinMaxScaler()
+    # Fit and transform the scaler on the selected columns
+    df[columns_to_scale] = flow_scaler.fit_transform(df[columns_to_scale])
+
+    # Now, create a new MinMaxScaler for 'NB_LATITUDE'
+    lat_scaler = MinMaxScaler()
+
+    # Fit and transform the scaler on 'NB_LATITUDE'
+    df['NB_LATITUDE'] = lat_scaler.fit_transform(df[['NB_LATITUDE']])
+
+    # Now, create a new MinMaxScaler for 'NB_LATITUDE'
+    long_scaler = MinMaxScaler()
+
+    # Fit and transform the scaler on 'NB_LATITUDE'
+    df['NB_LONGITUDE'] = long_scaler.fit_transform(df[['NB_LONGITUDE']])
+
+    # 2. Extract the day of the week from the 'Date' column
+    df['Day'] = df['Date'].dt.day_name()
+
+    # 3. One-hot encode the day of the week
+    days_encoded = pd.get_dummies(df['Day'], prefix='', prefix_sep='')
+    days_encoded = days_encoded.astype(int)
+
+
+    # 4. Drop the original 'Date' and 'Day' columns and concatenate the new one-hot encoded columns
+    df = df.drop(columns=['Date', 'Day'])
+    df = pd.concat([df, days_encoded], axis=1)
+
+    # 5. Reorder columns to desired format
+    ordered_cols = ['NB_LATITUDE', 'NB_LONGITUDE'] + days_encoded.columns.tolist() + [col for col in df if col.startswith('V')]
+    df = df[ordered_cols]
+
+    #print(f"TABLE:  \n\n {df}")
+
+
+
+    train = np.array(df)
+    np.random.shuffle(train)
+
+    X_train = train[:, :-1]
+    y_train = train[:, -1]
+
+    return X_train, y_train, flow_scaler, lat_scaler, long_scaler
+
+
+
+
+
+
+
+
+
+def transform_group(group, lags=3):
+    """Transforms a single group of data with a variable number of VXX columns, handling a full month of dates."""
+    values = group.iloc[:, 3:].values.flatten().tolist()
+    
+    # Since each location has entries for the entire month, 
+    # we can safely append values from the start of the group to handle end-to-start shifting
+    values += group.iloc[0:31, 3:].values.flatten().tolist()
+    
+    # Create a list to hold the transformed rows
+    transformed_rows = []
+    
+    for i in range(len(group)*len(group.columns[3:])):
+        # Extract the shifted values
+        shifted_values = values[i:i+lags]
+        
+        # Only proceed if there are the required number of values to append
+        if len(shifted_values) == lags:
+            # Determine the date for the transformed row
+            # Adjusted to take the date corresponding to the last V column value
+            date_index = (i + lags - 1) // (len(group.columns) - 3)
+            date = group['Date'].iloc[date_index % len(group)]
+            
+            # Append the transformed row
+            transformed_rows.append([group['NB_LATITUDE'].iloc[0], 
+                                     group['NB_LONGITUDE'].iloc[0], 
+                                     date] + shifted_values)
+    
+    # Adjust columns based on the number of V columns
+    columns = ['NB_LATITUDE', 'NB_LONGITUDE', 'Date'] + ['V{:02}'.format(i) for i in range(lags)]
+
+    return sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns))
+
+def sort_transformed_data(df, num_v_columns=3):
+    """Sorts the transformed data based on the last V column."""
+    last_v_column = 'V{:02}'.format(num_v_columns - 1)
+    return df.sort_values(by=['NB_LATITUDE', 'NB_LONGITUDE', 'Date', last_v_column])
+
+
+
+
+
+
+
+
+
+
+
+
+def backup():
     # Transpose the 'V00' to 'V95' row and its value row into columns
     # We're gonna turn time into a feature/input as well
     df = df.melt(id_vars=['NB_LATITUDE', 'NB_LONGITUDE', 'Day Of Week'], var_name='Time', value_name='Flow')
@@ -109,8 +223,31 @@ def process_data():
     # Get the input and target data
     x_train = df[['NB_LATITUDE', 'NB_LONGITUDE', 'Day Of Week', 'Time']].values
     y_train = df['Flow'].values
-
+    #print(f"y_TRAIN:  \n\n {df['Flow']}")
     # Reshape the input data for RNN
     x_train = x_train.reshape(x_train.shape[0], 4, 1)
 
-    return x_train, y_train, flow_scaler, lat_scaler, long_scaler
+    return
+
+
+
+
+def backup2():
+    # Ensure the Date column is in datetime format
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # Compute the DayOfWeek values
+    df['DayOfWeek'] = df['Date'].dt.dayofweek
+
+    # Get the position where 'Date' column is
+    date_col_index = df.columns.get_loc('Date')
+
+    # Insert the 'DayOfWeek' column at the position of 'Date' column
+    df.insert(date_col_index, 'DayOfWeek_temp', df['DayOfWeek'])
+
+    # Drop the 'Date' and 'DayOfWeek' columns
+    df = df.drop(columns=['Date', 'DayOfWeek'])
+
+    # Rename 'DayOfWeek_temp' to 'DayOfWeek'
+    df = df.rename(columns={'DayOfWeek_temp': 'DayOfWeek'})
+    return
