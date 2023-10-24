@@ -215,7 +215,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--end_scat",
         default="2820",
-        help="End scat number (default 2827).")
+        help="End scat number (default 2820).")
     parser.add_argument(
         "--date",
         default="14/10/2023",
@@ -243,6 +243,6 @@ if __name__ == '__main__':
         scat_data[scat].flow = flow_prediction[0][0]
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
-    response = routes  # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+    response = routes
     
     print(json.dumps(response))
