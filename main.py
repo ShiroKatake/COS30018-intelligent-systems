@@ -214,8 +214,8 @@ if __name__ == '__main__':
         help="Start scat number (default 970).")
     parser.add_argument(
         "--end_scat",
-        default="2827",
-        help="End scat number (default 2827).")
+        default="2820",
+        help="End scat number (default 2820).")
     parser.add_argument(
         "--date",
         default="14/10/2023",
@@ -242,10 +242,7 @@ if __name__ == '__main__':
         print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction[0][0]
 
-    route, travel_time = get_routes(scat_data, args.start_scat, args.end_scat)
-    response = [{
-        "route": route,
-        "travel_time": travel_time
-    }]  # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+    routes = get_routes(scat_data, args.start_scat, args.end_scat)
+    response = routes
     
     print(json.dumps(response))
