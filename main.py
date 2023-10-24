@@ -1,14 +1,20 @@
 import math
+import json
+import argparse
+from datetime import datetime
 import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
+from data.data import get_scats_dict
 from data.data import get_lat_long_from_scats, get_all_scats_points
 from keras.models import load_model
 from keras.utils import plot_model
 import sklearn.metrics as metrics
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
+from map.map import get_routes
 
 warnings.filterwarnings("ignore")
 
@@ -94,22 +100,24 @@ def plot_results(y_true, y_preds, names):
 
     plt.show()
 
-def predict_traffic_flow(latitude, longitude, time: float, model: str):
+def predict_traffic_flow(latitude, longitude, time, date, model):
+    # Convert date to day of week
+    date = datetime.strptime(date,'%d/%m/%Y')
+    day_of_week = date.weekday()
+
     # Normalize the time by dividing it by the total minutes in a day (1440)
-    normalized_time = time / 1440 #this number should be same as minutesInData variable from data.py
+    normalized_time = time / 1440 # This number should be same as df['Time'] in data.py
     
     # Transform latitude and longitude using respective scalers
     scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
     scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
-    
+
     # Prepare test data
-    X_test = np.array([[normalized_time, scaled_latitude, scaled_longitude]])
+    x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
     
-    # Reshape X_test based on the chosen model
-    if model in ['SAEs', 'nn']:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
-    else:
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    # Reshape x_test based on the chosen model
+    if model in ['SAEs']:
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
 
     # Map the string name of the model to the actual model object
     model_map = {
@@ -124,17 +132,13 @@ def predict_traffic_flow(latitude, longitude, time: float, model: str):
     if selected_model is None:
         raise ValueError(f"Unsupported model: {model}")
 
-    print(f"Select {model}")
+    # print(f"Select {model}")
 
     # Predict using the selected model
-    predicted = selected_model.predict(X_test)
+    predicted = selected_model.predict(x_test, verbose=None)
 
-    # Create a new array to structure the predictions
-    predicted_structure = np.zeros(shape=(len(predicted), 96))
-    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
-
-    # Transform the prediction using the y_scaler to get the actual prediction
-    final_prediction = y_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
+    # Transform the prediction using the flow_scaler to get the actual prediction
+    final_prediction = flow_scaler.inverse_transform(predicted)
     
     return final_prediction
 
@@ -176,7 +180,7 @@ def initialise_models():
     global gru
     global saes
     global nn
-    global y_scaler
+    global flow_scaler
     global lat_scaler
     global long_scaler
 
@@ -184,7 +188,7 @@ def initialise_models():
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
     nn = load_model('model/nn.h5')
-    _, _, _, _, y_scaler, lat_scaler, long_scaler = process_data(file1, '', 0)
+    _, _, flow_scaler, lat_scaler, long_scaler = process_data()
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
@@ -201,26 +205,47 @@ def time_string_to_minute_of_day(time_str):
 
 if __name__ == '__main__':
     initialise_models()
-    scats_points = get_all_scats_points(file1)
     
-    time = input("What time to predict? (e.g. 14:30): ")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--start_scat",
+        default="970",
+        help="Start scat number (default 970).")
+    parser.add_argument(
+        "--end_scat",
+        default="2827",
+        help="End scat number (default 2827).")
+    parser.add_argument(
+        "--date",
+        default="14/10/2023",
+        help="Date to predict (dd/mm/yyyy).")
+    parser.add_argument(
+        "--time",
+        default="14:30",
+        help="Time to predict (hh:mm).")
+    parser.add_argument(
+        "--model",
+        default="nn",
+        help="Model to use for prediction (lstm, gru, saes, nn [default]).")
+    args = parser.parse_args()
+
+    scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
 
     result = {}
 
-    for scat in scats_points:
+    for scat in scat_data:
         lat, long = get_lat_long_from_scats(file1, scat)
 
         # Make prediction
-        lstmPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='lstm'))
-        gruPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='gru'))
-        saesPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='saes'))
-        nnPrediction = str(predict_traffic_flow(latitude=lat, longitude=long, time=time_string_to_minute_of_day(time), model='nn'))
+        flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
+        print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        scat_data[scat].flow = flow_prediction[0][0]
 
-        result[scat] = {
-            'lstm': lstmPrediction,
-            'gru': gruPrediction,
-            'saes': saesPrediction,
-            'nn': nnPrediction
-        }
-
-    print(result)
+    route, travel_time = get_routes(scat_data, args.start_scat, args.end_scat)
+    response = [{
+        "route": route,
+        "travel_time": travel_time
+    }]  # Returning this as an array is currently a bandaid so we can output the correct data shape for the frontend. We will have a much better solution to output multiple paths
+    
+    print(json.dumps(response))
