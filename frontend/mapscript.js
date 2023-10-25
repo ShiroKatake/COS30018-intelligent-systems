@@ -79,6 +79,9 @@ form.addEventListener("submit", async (event) => {
     polylines.push(path);
     path.bringToBack();
 
+    // Add travel time estimation to the path
+    path.bindPopup(`${Math.round(route.travel_time)} minutes`);
+
     // Put an origin/dest marker on the first path
     if (index === 0) {
       const firstLocation = route.route[0];
@@ -99,10 +102,9 @@ form.addEventListener("submit", async (event) => {
       ])
         .bindPopup(`SCAT ${Object.keys(lastLocation)[0]}`)
         .addTo(map);
+      
+      path.openPopup();
     }
-
-    // Add travel time estimation to the path
-    path.bindPopup(`${Math.round(route.travel_time)} minutes`);
 
     // Add click event to swap between paths
     path.on("click", function () {
