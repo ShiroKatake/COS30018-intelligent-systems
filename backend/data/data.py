@@ -144,7 +144,7 @@ def process_data(lags=12):
     np.random.shuffle(train)
     X_train = train[:, :-1]
     y_train = train[:, -1]
-    #print(f"X_TRAIN SHAPE: {X_train.shape}")
+    #print(f"X_TRAIN SHAPE: {df.}")
     #print(f"Y_TRAIN SHAPE: {y_train.shape}")
     return X_train, y_train, flow_scaler, lat_scaler, long_scaler
 

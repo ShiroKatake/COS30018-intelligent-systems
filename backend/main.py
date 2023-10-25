@@ -138,24 +138,12 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     if selected_model is None:
         raise ValueError(f"Unsupported model: {model}")
 
-    # print(f"Select {model}")
-
-    # Predict using the selected model
-    #predicted = selected_model.predict(x_test, verbose=None)
-
     # Predict using the selected model
     predicted = selected_model.predict(x_test)
-    #print(f"predicted shape 1: {predicted.shape}")
-    # Create a new array to structure the predictions
+
     predicted_structure = np.zeros(shape=(len(predicted), 12))
-    #print(f"predicted structure: {predicted_structure.shape}")
 
     predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
-    #print(f"predicted structure 2: {predicted_structure.shape}")
-    # Transform the prediction using the flow_scaler to get the actual prediction
-    #final_prediction = flow_scaler.inverse_transform(predicted)
-
-    #print(f"flow_scaler: {flow_scaler.scale_}")
 
     final_prediction = flow_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
 
@@ -202,12 +190,15 @@ def initialise_models():
     global flow_scaler
     global lat_scaler
     global long_scaler
+    global X_train_data
+    global y_train_data
+
 
     lstm = load_model('model/lstm.h5')
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
     nn = load_model('model/nn.h5')
-    _, _, flow_scaler, lat_scaler, long_scaler = process_data()
+    X_train_data, y_train_data, flow_scaler, lat_scaler, long_scaler = process_data()
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
