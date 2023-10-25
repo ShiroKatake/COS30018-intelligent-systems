@@ -25,6 +25,14 @@ const getRoutes = async (params) => {
   const selectedTime = document.getElementById("time").value;
   const selectedDate = document.getElementById("date").value;
 
+  const params = {
+    start_scat: startPoint,
+    end_scat: endPoint,
+    model: selectedModel,
+    time: selectedTime,
+    date: selectedDate,
+  };
+
   const routeInfo = await getRoutes(params);
 
   // Initialize polyline array
