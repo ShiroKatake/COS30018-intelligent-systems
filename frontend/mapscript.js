@@ -41,15 +41,28 @@ form.addEventListener("submit", async (event) => {
   var polylines = [];
   // Selected path
   var selectedPath = null; 
-
+  // Map markers 
+  var originMarker;
+  var destinationMarker;
 
   // Delete old paths and markers
   polylines.forEach((polyline) => {
     map.removeLayer(polyline);
   });
 
+  // Delete old map markers
+  if (originMarker) {
+    map.removeLayer(originMarker);
+  }
+  if (destinationMarker) {
+    map.removeLayer(destinationMarker);
+  }
+
+
   // Clear the arrays
   polylines = [];
+  originMarker = null;
+  destinationMarker = null;
 
   // Iterate over the routeInfo to return lat and longs of each route
   routeInfo.forEach((route, index) => {
