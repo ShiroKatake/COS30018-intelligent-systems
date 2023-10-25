@@ -1,5 +1,6 @@
 import math
 import sys
+import os
 import json
 import argparse
 from datetime import datetime
@@ -18,6 +19,7 @@ import matplotlib.pyplot as plt
 from map.map import get_routes
 
 warnings.filterwarnings("ignore")
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 file1 = 'data/myData.csv'
 file2 = 'data/myData2.csv'

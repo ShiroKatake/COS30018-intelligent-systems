@@ -34,7 +34,7 @@ const executePython = async (script, args) => {
         // Handle any error occured
         py.stderr.on("data", (data) => {
             console.error(`[python] Error occured: ${data}`);
-            // reject(new Error(`Error occured in ${script}`));
+            reject(new Error(`Error occured in ${script}`));
         });
 
         py.on("exit", (code) => {
