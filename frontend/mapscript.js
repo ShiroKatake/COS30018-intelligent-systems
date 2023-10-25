@@ -6,7 +6,17 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
-document.getElementById("form").addEventListener("submit", async function () {
+const getRoutes = async (params) => {
+  try {
+    const url = "http://localhost:3001";
+    const response = await axios.post(url, null, { params });
+    const { data } = response;
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
   event.preventDefault();
 
   // var startPoint = document.getElementById("start_scat").value;
