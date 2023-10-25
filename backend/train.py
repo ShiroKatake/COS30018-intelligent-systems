@@ -93,7 +93,7 @@ def main(argv):
 
     if args.model == 'nn':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1]))
-        m = model.get_nn([5, 64, 64, 1])
+        m = model.get_nn([20, 64, 64, 1])
         train_model(m, x_train, y_train, args.model, config)
     if args.model == 'lstm':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
@@ -101,11 +101,11 @@ def main(argv):
         train_model(m, x_train, y_train, args.model, config)
     if args.model == 'gru':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-        m = model.get_gru([5, 64, 64, 1])
+        m = model.get_gru([20, 64, 64, 1])
         train_model(m, x_train, y_train, args.model, config)
     if args.model == 'saes':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1]))
-        m = model.get_saes([5, 400, 400, 400, 1])
+        m = model.get_saes([20, 400, 400, 400, 1])
         train_seas(m, x_train, y_train, args.model, config)
 
 

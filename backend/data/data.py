@@ -90,6 +90,7 @@ def process_data(lags=12):
     for _, group in grouped:
         list_of_transformed_dfs.append(transform_group(group, lags))
 
+    #print(list_of_transformed_dfs)
     df = pd.concat(list_of_transformed_dfs).reset_index(drop=True)
 
     #Get the position of the first time column in the CSV
@@ -108,35 +109,35 @@ def process_data(lags=12):
     df[columns_to_scale] = flow_scaler.fit_transform(flow1)
 
     # Now, create a new MinMaxScaler for 'NB_LATITUDE'
-    lat_scaler = MinMaxScaler()
+    lat_scaler = StandardScaler()
 
     # Fit and transform the scaler on 'NB_LATITUDE'
     df['NB_LATITUDE'] = lat_scaler.fit_transform(df[['NB_LATITUDE']])
 
     # Now, create a new MinMaxScaler for 'NB_LATITUDE'
-    long_scaler = MinMaxScaler()
+    long_scaler = StandardScaler()
 
     # Fit and transform the scaler on 'NB_LATITUDE'
     df['NB_LONGITUDE'] = long_scaler.fit_transform(df[['NB_LONGITUDE']])
 
-    # 2. Extract the day of the week from the 'Date' column
+    # Extract the day of the week from the 'Date' column
     df['Day'] = df['Date'].dt.day_name()
 
-    # 3. One-hot encode the day of the week
+    # One-hot encode the day of the week
     days_encoded = pd.get_dummies(df['Day'], prefix='', prefix_sep='')
     days_encoded = days_encoded.astype(int)
 
 
-    # 4. Drop the original 'Date' and 'Day' columns and concatenate the new one-hot encoded columns
+    # Drop the original 'Date' and 'Day' columns and concatenate the new one-hot encoded columns
     df = df.drop(columns=['Date', 'Day'])
     df = pd.concat([df, days_encoded], axis=1)
 
     #print(df)
-    # 5. Reorder columns to desired format
+    # Reorder columns to desired format
     ordered_cols = ['NB_LATITUDE', 'NB_LONGITUDE'] + days_encoded.columns.tolist() + [col for col in df if col.startswith('V')]
     df = df[ordered_cols]
 
-    #print(f"TABLE:  \n\n {df}")
+    #print(f"TABLE:  \n\n {df.head}")
 
 
 
