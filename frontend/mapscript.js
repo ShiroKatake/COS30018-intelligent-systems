@@ -1,5 +1,5 @@
 // Initialize the map
-var map = L.map("map").setView([-37.8136, 144.9631], 11);
+let map = L.map("map").setView([-37.8136, 144.9631], 11);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution:
@@ -19,16 +19,16 @@ const getRoutes = async (params) => {
 
   event.preventDefault();
 
-  // var startPoint = document.getElementById("start_scat").value;
-  // var endPoint = document.getElementById("end_scat").value;
-  // var selectedModel = document.getElementById("model").value;
-  // var selectedTime = document.getElementById("time").value;
-  // var selectedDate = document.getElementById("date").value;
+  const startPoint = document.getElementById("start_scat").value;
+  const endPoint = document.getElementById("end_scat").value;
+  const selectedModel = document.getElementById("model").value;
+  const selectedTime = document.getElementById("time").value;
+  const selectedDate = document.getElementById("date").value;
 
   const routeInfo = await getRoutes(params);
 
   // Initialize polyline array
-  var polylines = [];
+  let polylines = [];
 
   // Delete old paths
   polylines.forEach((polyline) => {
@@ -43,14 +43,14 @@ const getRoutes = async (params) => {
     const pathCoordinates = [];
 
     route.route.forEach((location) => {
-      const [key, value] = Object.entries(location)[0];
+      const [_, value] = Object.entries(location)[0];
       const lat = value.lat;
       const lng = value.long;
       pathCoordinates.push([lat, lng]);
     });
 
     const pathColour = index === 0 ? "blue" : "grey";
-    var path = L.polyline(pathCoordinates, { color: pathColour });
+    let path = L.polyline(pathCoordinates, { color: pathColour });
 
     path.addTo(map);
     polylines.push(path);
