@@ -38,14 +38,17 @@ form.addEventListener("submit", async (event) => {
   const routeInfo = await getRoutes(params);
 
   // Initialize polyline array
-  let polylines = [];
+  var polylines = [];
+  // Selected path
+  var selectedPath = null; 
 
-  // Delete old paths
+
+  // Delete old paths and markers
   polylines.forEach((polyline) => {
     map.removeLayer(polyline);
   });
 
-  // Clear the array
+  // Clear the arrays
   polylines = [];
 
   // Iterate over the routeInfo to return lat and longs of each route
@@ -64,6 +67,45 @@ form.addEventListener("submit", async (event) => {
 
     path.addTo(map);
     polylines.push(path);
+
+    // Put an origin/dest marker on the first path
+    if (index === 0) {
+      const firstLocation = route.route[0];
+      const lastLocation = route.route[route.route.length - 1];
+
+      // Origin marker
+      originMarker = L.marker([
+        firstLocation[Object.keys(firstLocation)[0]].lat,
+        firstLocation[Object.keys(firstLocation)[0]].long,
+      ])
+        .bindPopup("Origin")
+        .addTo(map);
+
+      // Destination marker
+      destinationMarker = L.marker([
+        lastLocation[Object.keys(lastLocation)[0]].lat,
+        lastLocation[Object.keys(lastLocation)[0]].long,
+      ])
+        .bindPopup("Destination")
+        .addTo(map);
+    }
+
+    // Add click event to swap between paths
+    path.on("click", function () {
+      if (selectedPath) {
+        // Old selected path 
+        selectedPath.setStyle({ color: "grey" });
+      }
+
+      // New chosen path
+      path.setStyle({ color: "blue" });
+      selectedPath = path;
+    });
+
+    // First path selected by default
+    if (index === 0) {
+      selectedPath = path;
+    }
   });
 
   if (polylines.length > 0) {
