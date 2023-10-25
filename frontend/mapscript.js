@@ -17,6 +17,8 @@ const getRoutes = async (params) => {
   }
 }
 
+const form = document.getElementById("form");
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const startPoint = document.getElementById("start_scat").value;
