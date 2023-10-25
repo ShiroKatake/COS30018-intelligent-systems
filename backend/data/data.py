@@ -99,12 +99,9 @@ def process_data(lags=12):
     flow1 = df.to_numpy()[:, columnPositionOfTimeColumn:]
 
     flow_scaler = StandardScaler()
-    #flow_scaled = flow_scaler.transform(flow1)
     # Select the columns to be scaled (from 'V00' to the last column)
     columns_to_scale = df.columns[df.columns.get_loc('V00'):]
 
-    #flow_scaler = MinMaxScaler()
-    
     # # Fit and transform the scaler on the selected columns
     df[columns_to_scale] = flow_scaler.fit_transform(flow1)
 
@@ -127,26 +124,18 @@ def process_data(lags=12):
     days_encoded = pd.get_dummies(df['Day'], prefix='', prefix_sep='')
     days_encoded = days_encoded.astype(int)
 
-
     # Drop the original 'Date' and 'Day' columns and concatenate the new one-hot encoded columns
     df = df.drop(columns=['Date', 'Day'])
     df = pd.concat([df, days_encoded], axis=1)
 
-    #print(df)
     # Reorder columns to desired format
     ordered_cols = ['NB_LATITUDE', 'NB_LONGITUDE'] + days_encoded.columns.tolist() + [col for col in df if col.startswith('V')]
     df = df[ordered_cols]
-
-    #print(f"TABLE:  \n\n {df.head}")
-
-
 
     train = np.array(df)
     np.random.shuffle(train)
     X_train = train[:, :-1]
     y_train = train[:, -1]
-    #print(f"X_TRAIN:")
-    #print(f"Y_TRAIN SHAPE: {y_train.shape}")
     return X_train, y_train, flow_scaler, lat_scaler, long_scaler
 
 
@@ -159,7 +148,6 @@ def process_data(lags=12):
 
 def transform_group(group, lags=3):
     """Transforms a single group of data with a variable number of VXX columns, handling a full month of dates."""
-    #print(group)
     values = group.iloc[:, 3:].values.flatten().tolist()
     
     # Since each location has entries for the entire month, 
@@ -185,16 +173,10 @@ def transform_group(group, lags=3):
                                      group['NB_LONGITUDE'].iloc[0], 
                                      date] + shifted_values)
     
-    # Adjust columns based on the number of V columns
     columns = ['NB_LATITUDE', 'NB_LONGITUDE', 'Date'] + ['V{:02}'.format(i) for i in range(lags)]
-    #print(pd.DataFrame(transformed_rows, columns=columns))
-    #print(f"SORTED: {sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns), len(columns) - 2)}")
-
     return pd.DataFrame(transformed_rows, columns=columns)
 
-    #return sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns))
-
-def sort_transformed_data(df, num_v_columns=3):
-    """Sorts the transformed data based on the last V column."""
-    last_v_column = 'V{:02}'.format(num_v_columns - 1)
-    return df.sort_values(by=['NB_LATITUDE', 'NB_LONGITUDE', 'Date', last_v_column])
+# def sort_transformed_data(df, num_v_columns=3):
+#     """Sorts the transformed data based on the last V column."""
+#     last_v_column = 'V{:02}'.format(num_v_columns - 1)
+#     return df.sort_values(by=['NB_LATITUDE', 'NB_LONGITUDE', 'Date', last_v_column])

@@ -155,9 +155,6 @@ def get_previous_11_data(df, lat, lon, date, time):
     # remove dummy value
     scaled_data_points = scaled_data_points[:, :-1]
 
-
-    #print(f"SCALED: {scaled_data_points}")
-
     return np.array(scaled_data_points)
 
 def predict_traffic_flow(latitude, longitude, time, date, model):
@@ -165,7 +162,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     date = datetime.strptime(date, '%d/%m/%Y')
     day_of_week = date.weekday()
 
-    # Custom order based on your sequence
+    # Custom order based on what order days are in in the ordered data later (days are alphabetical)
     custom_order = [4, 0, 5, 6, 3, 1, 2]
 
     # Create the binary list based on the custom order
@@ -173,37 +170,25 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     time = round_to_nearest_15(time)
 
-    # Normalize the time by dividing it by the total minutes in a day (1440)
-    normalized_time = time / 1440 # This number should be same as df['Time'] in data.py
-
     # Transform latitude and longitude using respective scalers
     scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
     scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
 
-    
-
-    # Prepare test data
-    #x_test = np.array([[scaled_latitude, scaled_longitude, 0, 0, 0, 0, 0, 0, 1, 0,0,0,0,0,0,0,0,0,0,0]])
-    #print(f"TARGET: {x_test}")
-
     x_test = np.array([[scaled_latitude, scaled_longitude]])
+
+    #add one hot encoded days
     for day in binary_list:
         x_test = np.append(x_test, [day]).reshape(1, -1)
     
+    # Add previous time data
     x_test = np.append(x_test, get_previous_11_data(process_data_csv, latitude, longitude, date, time)).reshape(1, -1)
 
-    #print(f"x_test: {x_test}")
-
-    #print(f"FIRST x_test SHAPE: {x_test.shape}")
-    #print(x_test.shape)
     # Reshape x_test based on the chosen model
     if model in ['SAEs']:
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
     else:
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
     
-    #print(f"SECOND x_test SHAPE: {x_test.shape}")
-
     # Map the string name of the model to the actual model object
     model_map = {
         'lstm': lstm,
@@ -220,8 +205,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     # Predict using the selected model
     predicted = selected_model.predict(x_test)
 
-    #print(f"SHAPE = {predicted.shape}")
-
+    # setting up the shape
     predicted_structure = np.zeros(shape=(len(predicted), 12))
 
     predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
@@ -282,7 +266,6 @@ def initialise_models():
     nn = load_model('model/nn.h5')
     X_train_global, y_train_global, flow_scaler, lat_scaler, long_scaler = process_data()
     process_data_csv = pd.read_csv('data/ProcessedData.csv', encoding='utf-8').fillna(0)
-    print("INITIALISED")
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
@@ -316,11 +299,11 @@ if __name__ == '__main__':
         help="Date to predict (dd/mm/yyyy).")
     parser.add_argument(
         "--time",
-        default="0:30",
+        default="16:30",
         help="Time to predict (hh:mm).")
     parser.add_argument(
         "--model",
-        default="lstm",
+        default="nn",
         help="Model to use for prediction (lstm, gru, saes, nn [default]).")
     args = parser.parse_args()
 
@@ -336,8 +319,8 @@ if __name__ == '__main__':
         scat_data[scat].flow = flow_prediction
 
 
-    # routes = get_routes(scat_data, args.start_scat, args.end_scat)
-    # response = routes
+    routes = get_routes(scat_data, args.start_scat, args.end_scat)
+    response = routes
     
-    # print(json.dumps(response))
-    # sys.stdout.flush()
+    print(json.dumps(response))
+    sys.stdout.flush()
