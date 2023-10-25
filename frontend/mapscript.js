@@ -89,7 +89,7 @@ form.addEventListener("submit", async (event) => {
         firstLocation[Object.keys(firstLocation)[0]].lat,
         firstLocation[Object.keys(firstLocation)[0]].long,
       ])
-        .bindPopup("Origin")
+        .bindPopup(`SCAT ${Object.keys(firstLocation)[0]}`)
         .addTo(map);
 
       // Destination marker
@@ -97,16 +97,19 @@ form.addEventListener("submit", async (event) => {
         lastLocation[Object.keys(lastLocation)[0]].lat,
         lastLocation[Object.keys(lastLocation)[0]].long,
       ])
-        .bindPopup("Destination")
+        .bindPopup(`SCAT ${Object.keys(lastLocation)[0]}`)
         .addTo(map);
     }
+
+    // Add travel time estimation to the path
+    path.bindPopup(`${Math.round(route.travel_time)} minutes`);
 
     // Add click event to swap between paths
     path.on("click", function () {
       polylines.forEach((polyline) => {
         if (polyline._leaflet_id !== path._leaflet_id) {
           polyline.setStyle({ color: "grey" });
-      }
+        }
       });
 
       // New chosen path
