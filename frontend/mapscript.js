@@ -17,6 +17,11 @@ const getRoutes = async (params) => {
   }
 }
 
+// Initialize 
+let polylines = [];
+let originMarker;
+let destinationMarker;
+
 const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -36,14 +41,6 @@ form.addEventListener("submit", async (event) => {
   };
 
   const routeInfo = await getRoutes(params);
-
-  // Initialize polyline array
-  var polylines = [];
-  // Selected path
-  var selectedPath = null; 
-  // Map markers 
-  var originMarker;
-  var destinationMarker;
 
   // Delete old paths and markers
   polylines.forEach((polyline) => {
@@ -105,20 +102,16 @@ form.addEventListener("submit", async (event) => {
 
     // Add click event to swap between paths
     path.on("click", function () {
-      if (selectedPath) {
-        // Old selected path 
-        selectedPath.setStyle({ color: "grey" });
+      polylines.forEach((polyline) => {
+        if (polyline._leaflet_id !== path._leaflet_id) {
+          polyline.setStyle({ color: "grey" });
       }
+      });
 
       // New chosen path
       path.setStyle({ color: "blue" });
-      selectedPath = path;
+      path.bringToFront();
     });
-
-    // First path selected by default
-    if (index === 0) {
-      selectedPath = path;
-    }
   });
 
   if (polylines.length > 0) {
