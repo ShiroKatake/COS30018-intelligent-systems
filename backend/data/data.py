@@ -144,7 +144,7 @@ def process_data(lags=12):
     np.random.shuffle(train)
     X_train = train[:, :-1]
     y_train = train[:, -1]
-    #print(f"X_TRAIN SHAPE: {df.}")
+    #print(f"X_TRAIN:")
     #print(f"Y_TRAIN SHAPE: {y_train.shape}")
     return X_train, y_train, flow_scaler, lat_scaler, long_scaler
 
@@ -158,6 +158,7 @@ def process_data(lags=12):
 
 def transform_group(group, lags=3):
     """Transforms a single group of data with a variable number of VXX columns, handling a full month of dates."""
+    #print(group)
     values = group.iloc[:, 3:].values.flatten().tolist()
     
     # Since each location has entries for the entire month, 
@@ -185,8 +186,12 @@ def transform_group(group, lags=3):
     
     # Adjust columns based on the number of V columns
     columns = ['NB_LATITUDE', 'NB_LONGITUDE', 'Date'] + ['V{:02}'.format(i) for i in range(lags)]
+    #print(pd.DataFrame(transformed_rows, columns=columns))
+    #print(f"SORTED: {sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns), len(columns) - 2)}")
 
-    return sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns))
+    return pd.DataFrame(transformed_rows, columns=columns)
+
+    #return sort_transformed_data(pd.DataFrame(transformed_rows, columns=columns))
 
 def sort_transformed_data(df, num_v_columns=3):
     """Sorts the transformed data based on the last V column."""
