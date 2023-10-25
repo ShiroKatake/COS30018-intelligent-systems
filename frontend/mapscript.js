@@ -42,7 +42,7 @@ form.addEventListener("submit", async (event) => {
 
   const routeInfo = await getRoutes(params);
 
-  // Delete old paths and markers
+  // Delete old paths
   polylines.forEach((polyline) => {
     polyline.remove();
   });
