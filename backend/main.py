@@ -115,10 +115,15 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     # Prepare test data
     x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
-    print(x_test.shape)
+    #print(f"FIRST x_test SHAPE: {x_test.shape}")
+    #print(x_test.shape)
     # Reshape x_test based on the chosen model
     if model in ['SAEs']:
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
+    else:
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    
+    #print(f"SECOND x_test SHAPE: {x_test.shape}")
 
     # Map the string name of the model to the actual model object
     model_map = {
@@ -136,10 +141,24 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     # print(f"Select {model}")
 
     # Predict using the selected model
-    predicted = selected_model.predict(x_test, verbose=None)
+    #predicted = selected_model.predict(x_test, verbose=None)
+
+    # Predict using the selected model
+    predicted = selected_model.predict(x_test)
+    #print(f"predicted shape 1: {predicted.shape}")
+    # Create a new array to structure the predictions
+    predicted_structure = np.zeros(shape=(len(predicted), 12))
+    #print(f"predicted structure: {predicted_structure.shape}")
+
+    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
+    #print(f"predicted structure 2: {predicted_structure.shape}")
     # Transform the prediction using the flow_scaler to get the actual prediction
-    final_prediction = flow_scaler.inverse_transform(predicted)
-    
+    #final_prediction = flow_scaler.inverse_transform(predicted)
+
+    #print(f"flow_scaler: {flow_scaler.scale_}")
+
+    final_prediction = flow_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
+
     return final_prediction
 
 
@@ -226,12 +245,11 @@ if __name__ == '__main__':
         help="Time to predict (hh:mm).")
     parser.add_argument(
         "--model",
-        default="nn",
+        default="lstm",
         help="Model to use for prediction (lstm, gru, saes, nn [default]).")
     args = parser.parse_args()
 
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
-
     result = {}
 
     for scat in scat_data:
@@ -239,11 +257,12 @@ if __name__ == '__main__':
 
         # Make prediction
         flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
-        # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
-        scat_data[scat].flow = flow_prediction[0][0]
+        print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        scat_data[scat].flow = flow_prediction
 
-    routes = get_routes(scat_data, args.start_scat, args.end_scat)
-    response = routes
+
+    # routes = get_routes(scat_data, args.start_scat, args.end_scat)
+    # response = routes
     
-    print(json.dumps(response))
-    sys.stdout.flush()
+    # print(json.dumps(response))
+    # sys.stdout.flush()

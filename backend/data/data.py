@@ -81,7 +81,6 @@ def process_data(lags=12):
 
     
     df['Date'] = pd.to_datetime(df['Date'], format='%d/%m/%Y')  # Convert date column to datetime
-    #df['Day Of Week'] = df['Date'].dt.dayofweek  # Extract the day of the week. Yes we have the Weeknum column, but we want to use a standardalized method (0-6, mon to sun)
 
     # Dropping non-relevant data
     df = df.drop(['SCATS Number', 'Location', 'CD_MELWAY', 'HF VicRoads Internal', 'VR Internal Stat', 'VR Internal Loc', 'NB_TYPE_SURVEY', 'Weeknum'], axis=1)
@@ -93,12 +92,20 @@ def process_data(lags=12):
 
     df = pd.concat(list_of_transformed_dfs).reset_index(drop=True)
 
+    #Get the position of the first time column in the CSV
+    columnPositionOfTimeColumn = df.columns.get_loc("V00")
+
+    flow1 = df.to_numpy()[:, columnPositionOfTimeColumn:]
+
+    flow_scaler = StandardScaler()
+    #flow_scaled = flow_scaler.transform(flow1)
     # Select the columns to be scaled (from 'V00' to the last column)
     columns_to_scale = df.columns[df.columns.get_loc('V00'):]
 
-    flow_scaler = MinMaxScaler()
-    # Fit and transform the scaler on the selected columns
-    df[columns_to_scale] = flow_scaler.fit_transform(df[columns_to_scale])
+    #flow_scaler = MinMaxScaler()
+    
+    # # Fit and transform the scaler on the selected columns
+    df[columns_to_scale] = flow_scaler.fit_transform(flow1)
 
     # Now, create a new MinMaxScaler for 'NB_LATITUDE'
     lat_scaler = MinMaxScaler()
@@ -124,6 +131,7 @@ def process_data(lags=12):
     df = df.drop(columns=['Date', 'Day'])
     df = pd.concat([df, days_encoded], axis=1)
 
+    #print(df)
     # 5. Reorder columns to desired format
     ordered_cols = ['NB_LATITUDE', 'NB_LONGITUDE'] + days_encoded.columns.tolist() + [col for col in df if col.startswith('V')]
     df = df[ordered_cols]
@@ -134,10 +142,10 @@ def process_data(lags=12):
 
     train = np.array(df)
     np.random.shuffle(train)
-
     X_train = train[:, :-1]
     y_train = train[:, -1]
-
+    #print(f"X_TRAIN SHAPE: {X_train.shape}")
+    #print(f"Y_TRAIN SHAPE: {y_train.shape}")
     return X_train, y_train, flow_scaler, lat_scaler, long_scaler
 
 
