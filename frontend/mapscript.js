@@ -44,17 +44,16 @@ form.addEventListener("submit", async (event) => {
 
   // Delete old paths and markers
   polylines.forEach((polyline) => {
-    map.removeLayer(polyline);
+    polyline.remove();
   });
 
   // Delete old map markers
   if (originMarker) {
-    map.removeLayer(originMarker);
+    originMarker.remove();
   }
   if (destinationMarker) {
-    map.removeLayer(destinationMarker);
+    destinationMarker.remove();
   }
-
 
   // Clear the arrays
   polylines = [];
@@ -72,11 +71,13 @@ form.addEventListener("submit", async (event) => {
       pathCoordinates.push([lat, lng]);
     });
 
+    // Add path, best path set to blue
     const pathColour = index === 0 ? "blue" : "grey";
     let path = L.polyline(pathCoordinates, { color: pathColour });
 
     path.addTo(map);
     polylines.push(path);
+    path.bringToBack();
 
     // Put an origin/dest marker on the first path
     if (index === 0) {
