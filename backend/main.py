@@ -101,25 +101,94 @@ def plot_results(y_true, y_preds, names):
 
     plt.show()
 
+def round_to_nearest_15(minutes):
+    """Rounds the time to the nearest 15 minutes."""
+    remainder = minutes % 15
+    if remainder < 7.5:
+        return minutes - remainder
+    else:
+        return minutes + (15 - remainder)
+
+def minute_to_time(minute_of_day):
+    hours = minute_of_day // 60
+    minutes = minute_of_day % 60
+    return "{:02d}:{:02d}".format(hours, minutes)
+
+def get_previous_11_data(df, lat, lon, date, time):
+    # Convert
+    time = minute_to_time(time)
+    
+    # Date to Day of week
+    day = date.strftime('%A')
+
+    # Fetch the previous 11 data points
+    data_points = []
+    for _ in range(11):
+        # Decrement time
+        col_index = list(df.columns).index(time) - 1
+        
+        # If we've reached the beginning of the day
+        if col_index < 3:
+            # Move to the previous day
+            days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            day = days[days.index(day) - 1]
+            time = "23:45"
+            col_index = -1  # Reset to the last column (23:45)
+        else:
+            time = df.columns[col_index]
+
+        # Find the row corresponding to the given latitude, longitude, and day
+        row = df[(df['NB_LATITUDE'] == lat) & (df['NB_LONGITUDE'] == lon) & (df['Date'] == day)]
+        
+        # If no such row exists, raise an error
+        if row.empty:
+            raise ValueError(f"No data found for the given location and day {day}.")
+        
+        data_points.insert(0, row.iloc[0, col_index])  # prepend the data point
+
+    # Add a dummy value to be removed later. This is needed because the scaler is expecting 12 features, but we need to use 11 to predict, so we'll append one and then scale and then remove it.
+    data_points = data_points + [0]
+
+    # scale with dummy
+    scaled_data_points = flow_scaler.transform(np.array(data_points).reshape(1, -1))
+
+    # remove dummy value
+    scaled_data_points = scaled_data_points[:, :-1]
+
+    return np.array(scaled_data_points)
+
 def predict_traffic_flow(latitude, longitude, time, date, model):
-    # Convert date to day of week
-    date = datetime.strptime(date,'%d/%m/%Y')
+    # Parse the date
+    date = datetime.strptime(date, '%d/%m/%Y')
     day_of_week = date.weekday()
 
-    # Normalize the time by dividing it by the total minutes in a day (1440)
-    normalized_time = time / 1440 # This number should be same as df['Time'] in data.py
-    
+    # Custom order based on what order days are in in the ordered data later (days are alphabetical)
+    custom_order = [4, 0, 5, 6, 3, 1, 2]
+
+    # Create the binary list based on the custom order
+    binary_list = [1 if custom_order[i] == day_of_week else 0 for i in range(7)]
+
+    time = round_to_nearest_15(time)
+
     # Transform latitude and longitude using respective scalers
     scaled_latitude = lat_scaler.transform(np.array(latitude).reshape(1, -1))[0][0]
     scaled_longitude = long_scaler.transform(np.array(longitude).reshape(1, -1))[0][0]
 
-    # Prepare test data
-    x_test = np.array([[scaled_latitude, scaled_longitude, day_of_week, normalized_time]])
+    x_test = np.array([[scaled_latitude, scaled_longitude]])
+
+    #add one hot encoded days
+    for day in binary_list:
+        x_test = np.append(x_test, [day]).reshape(1, -1)
     
+    # Add previous time data
+    x_test = np.append(x_test, get_previous_11_data(process_data_csv, latitude, longitude, date, time)).reshape(1, -1)
+
     # Reshape x_test based on the chosen model
     if model in ['SAEs']:
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1]))
-
+    else:
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    
     # Map the string name of the model to the actual model object
     model_map = {
         'lstm': lstm,
@@ -133,14 +202,17 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
     if selected_model is None:
         raise ValueError(f"Unsupported model: {model}")
 
-    # print(f"Select {model}")
-
     # Predict using the selected model
-    predicted = selected_model.predict(x_test, verbose=None)
+    predicted = selected_model.predict(x_test)
 
-    # Transform the prediction using the flow_scaler to get the actual prediction
-    final_prediction = flow_scaler.inverse_transform(predicted)
+    # setting up the shape
+    predicted_structure = np.zeros(shape=(len(predicted), 12))
+
+    predicted_structure[:, 0] = predicted.reshape(-1, 1)[:, 0]
+
+    final_prediction = flow_scaler.inverse_transform(predicted_structure)[:, 0].reshape(1, -1)[0][0]
     
+
     return final_prediction
 
 
@@ -184,12 +256,16 @@ def initialise_models():
     global flow_scaler
     global lat_scaler
     global long_scaler
+    global X_train_global
+    global y_train_global
+    global process_data_csv
 
     lstm = load_model('model/lstm.h5')
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
     nn = load_model('model/nn.h5')
-    _, _, flow_scaler, lat_scaler, long_scaler = process_data()
+    X_train_global, y_train_global, flow_scaler, lat_scaler, long_scaler = process_data()
+    process_data_csv = pd.read_csv('data/ProcessedData.csv', encoding='utf-8').fillna(0)
 
 def time_string_to_minute_of_day(time_str):
     # Split the time string by the colon to get the hour and minute parts.
@@ -223,7 +299,7 @@ if __name__ == '__main__':
         help="Date to predict (dd/mm/yyyy).")
     parser.add_argument(
         "--time",
-        default="14:30",
+        default="16:30",
         help="Time to predict (hh:mm).")
     parser.add_argument(
         "--model",
@@ -232,7 +308,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
-
     result = {}
 
     for scat in scat_data:
@@ -240,8 +315,9 @@ if __name__ == '__main__':
 
         # Make prediction
         flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
-        # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
-        scat_data[scat].flow = flow_prediction[0][0]
+        print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        scat_data[scat].flow = flow_prediction
+
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
