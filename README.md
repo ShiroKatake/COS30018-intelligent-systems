@@ -1,11 +1,29 @@
 # Traffic Flow Prediction
 Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
 
-## Requirement
-- Python 3.6    
-- Tensorflow-gpu 1.5.0  
-- Keras 2.1.3
-- scikit-learn 0.19
+## Requirements
+- python 3.9-3.11   
+- tensorflow-gpu 1.5.0  
+- tensorflow 2.13.0
+- keras 2.13.1
+- scikit-learn 1.3.0
+- numpy 1.24.3
+- pandas 2.0.3
+- matplotlib 3.7.2
+- geopy 2.4.0
+- pydot 1.4.2
+- Node.js (in order to use npm)
+
+## Quick install python packages 
+- pip install -r requirements.txt
+
+## Running the application
+- cd into the front end
+- npm install
+- cd into the back end
+- npm install
+- npm run start
+- open the map.html file in the front end folder 
 
 ## Train the model
 
@@ -15,23 +33,12 @@ Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
 python train.py --model model_name
 ```
 
-You can choose "lstm", "gru" or "saes" as arguments. The ```.h5``` weight file was saved at model folder.
-
-
-## Experiment
-
-Data are obtained from the Caltrans Performance Measurement System (PeMS). Data are collected in real-time from individual detectors spanning the freeway system across all major metropolitan areas of the State of California.
-	
-	device: Tesla K80
-	dataset: PeMS 5min-interval traffic flow data
-	optimizer: RMSprop(lr=0.001, rho=0.9, epsilon=1e-06)
-	batch_szie: 256 
-
+You can choose "lstm", "gru", "rnn" or "saes" as arguments. The ```.h5``` weight file was saved at model folder.
 
 **Run command below to run the program:**
 
 ```
-python main.py
+python main.py --start_scat <scat value> --end_scat <scat value> --date <yyyy-mm-dd> --time 00:00 --model <model type> or python main.py to use the default values
 ```
 
 These are the details for the traffic flow prediction experiment.
