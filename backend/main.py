@@ -352,7 +352,7 @@ if __name__ == '__main__':
         help="End scat number (default 2820).")
     parser.add_argument(
         "--date",
-        default="2023-01-01",
+        default="2023-10-23",
         help="Date to predict (yyyy-mm-dd).")
     parser.add_argument(
         "--time",
@@ -378,7 +378,7 @@ if __name__ == '__main__':
         # print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction
 
-    # output_graph(lat, long) # TO BE COMMENTED OUT WHEN NOT TESTING
+    output_graph(lat, long) # TO BE COMMENTED OUT WHEN NOT TESTING
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
