@@ -40,6 +40,7 @@ form.addEventListener("submit", async (event) => {
     date: selectedDate,
   };
 
+  console.log("Calculating routes...");
   const routeResult = await getRoutes(params);
 
   // Delete old paths
