@@ -37,7 +37,7 @@ You can choose "lstm", "gru", "rnn" or "saes" as arguments. The ```.h5``` weight
 **Run command below to run the program:**
 
 ```
-python main.py --start_scat <scat value> --end_scat <scat value> --date <dd-mm-yyyy> --time 00:00 --model <model type> or python main.py to use the default values
+python main.py --start_scat <scat value> --end_scat <scat value> --date <yyyy-mm-dd> --time 00:00 --model <model type> or python main.py to use the default values
 ```
 
 These are the details for the traffic flow prediction experiment.
