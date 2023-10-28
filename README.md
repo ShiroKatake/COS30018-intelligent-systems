@@ -11,6 +11,7 @@ Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
 - pandas 2.0.3
 - matplotlib 3.7.2
 - geopy 2.4.0
+- pydot 1.4.2
 - Node.js (in order to use npm)
 
 ## Quick install python packages 
