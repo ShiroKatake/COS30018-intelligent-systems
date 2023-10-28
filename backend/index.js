@@ -3,6 +3,13 @@ const { spawn } = require("child_process");
 
 const app = express();
 
+app.use((_, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST");
+    res.set("Access-Control-Allow-Headers", "*");
+    next();
+  });
+
 const executePython = async (script, args) => {
     // Get args
     const pyArgs = [
@@ -27,7 +34,7 @@ const executePython = async (script, args) => {
         // Handle any error occured
         py.stderr.on("data", (data) => {
             console.error(`[python] Error occured: ${data}`);
-            // reject(new Error(`Error occured in ${script}`));
+            reject(new Error(`Error occured in ${script}`));
         });
 
         py.on("exit", (code) => {

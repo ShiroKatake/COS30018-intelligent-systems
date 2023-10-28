@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Leaflet Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="map.css" />
+  </head>
+  <body>
+    <h1>COS30018 Intelligent Systems - Traffic Flow System</h1>
+    <div id="map"></div>
+    <form id="form" action="http://localhost:3001" method="POST">
+      <div id="controls">
+        <select id="start_scat" name="start_scat">
+          <option value="" disabled selected>Start Scat Options</option>
+          <option value="970">970 WARRIGAL_RD N of HIGH STREET_RD</option>
+          <option value="2000">2000 WARRIGAL_RD N of TOORAK_RD</option>
+          <option value="2200">2200 UNION_RD N of MAROONDAH_HWY</option>
+          <option value="2820">2820 EARL_ST SE of PRINCESS_ST</option>
+          <option value="2825">2825 BURKE_RD S of EASTERN_FWY</option>
+          <option value="2827">2827 BULLEEN_RD N of THOMPSONS_RD</option>
+          <option value="2846">2846 S.E.ARTERIAL N OF HIGH_ST</option>
+          <option value="3001">3001 HIGH_ST NE of BARKERS_RD</option>
+          <option value="3002">3002 DENMARK_ST N of BARKERS_RD</option>
+          <option value="3120">3120 BURKE_RD N of CANTERBURY_RD</option>
+          <option value="3122">3122 CANTERBURY_RD E of STANHOPE_GV</option>
+          <option value="3126">3126 CANTERBURY_RD E of WARRIGAL_RD</option>
+          <option value="3127">3127 BALWYN_RD N of CANTERBURY_RD</option>
+          <option value="3180">3180 DONCASTER_RD E of BALWYN_RD</option>
+          <option value="3662">3662 PRINCESS_ST N of HIGH_ST</option>
+          <option value="3682">3682 WARRIGAL_RD N OF RIVERSDALE_RD</option>
+          <option value="3685">3685 WARRIGAL_RD N of HIGHBURY_RD</option>
+          <option value="3804">3804 TRAFALGAR_RD N of RIVERSDALE_RD</option>
+          <option value="3812">3812 TRAFALGAR_RD NE of CAMBERWELL_RD</option>
+          <option value="4030">4030 BURKE_RD S of DONCASTER_RD</option>
+          <option value="4032">4032 BURKE_RD N of HARP_RD</option>
+          <option value="4034">4034 BURKE_RD N OF WHITEHORSE_RD</option>
+          <option value="4035">4035 BURKE_RD N of MONT ALBERT_RD</option>
+          <option value="4040">4040 BURKE_RD N of RIVERSDALE_RD</option>
+          <option value="4043">4043 BURKE_RD N of TOORAK_RD</option>
+          <option value="4051">4051 DONCASTER_RD E of BULLEEN_RD</option>
+          <option value="4057">4057 BALWYN_RD N OF BELMORE_RD</option>
+          <option value="4063">4063 BALWYN_RD N OF WHITEHORSE_RD</option>
+          <option value="4262">4262 BRIDGE_RD SW of BURWOOD_RD</option>
+          <option value="4263">4263 POWER_ST N of BURWOOD_RD</option>
+          <option value="4264">4264 GLENFERRIE_RD N of BURWOOD_RD</option>
+          <option value="4266">4266 BURWOOD_RD E of AUBURN_RD</option>
+          <option value="4270">4270 GLENFERRIE_RD N of RIVERSDALE_RD</option>
+          <option value="4272">4272 RIVERSDALE_RD E of TOORONGA_RD</option>
+          <option value="4273">4273 TOORONGA_RD N of TOORAK_RD</option>
+          <option value="4321">4321 HIGH_ST NE OF HARP_ST</option>
+          <option value="4324">4324 COTHAM_RD E OF GLENFERRIE_RD</option>
+          <option value="4335">4335 HIGH_ST NE of CHARLES_ST</option>
+          <option value="4812">4812 SWAN_ST NE of MADDEN_GV</option>
+          <option value="4821">4821 WALMER_ST N OF VICTORIA_ST</option>
+        </select>
+        <select id="end_scat" name="end_scat">
+          <option value="" disabled selected>End Scat Options</option>
+          <option value="970">970 WARRIGAL_RD N of HIGH STREET_RD</option>
+          <option value="2000">2000 WARRIGAL_RD N of TOORAK_RD</option>
+          <option value="2200">2200 UNION_RD N of MAROONDAH_HWY</option>
+          <option value="2820">2820 EARL_ST SE of PRINCESS_ST</option>
+          <option value="2825">2825 BURKE_RD S of EASTERN_FWY</option>
+          <option value="2827">2827 BULLEEN_RD N of THOMPSONS_RD</option>
+          <option value="2846">2846 S.E.ARTERIAL N OF HIGH_ST</option>
+          <option value="3001">3001 HIGH_ST NE of BARKERS_RD</option>
+          <option value="3002">3002 DENMARK_ST N of BARKERS_RD</option>
+          <option value="3120">3120 BURKE_RD N of CANTERBURY_RD</option>
+          <option value="3122">3122 CANTERBURY_RD E of STANHOPE_GV</option>
+          <option value="3126">3126 CANTERBURY_RD E of WARRIGAL_RD</option>
+          <option value="3127">3127 BALWYN_RD N of CANTERBURY_RD</option>
+          <option value="3180">3180 DONCASTER_RD E of BALWYN_RD</option>
+          <option value="3662">3662 PRINCESS_ST N of HIGH_ST</option>
+          <option value="3682">3682 WARRIGAL_RD N OF RIVERSDALE_RD</option>
+          <option value="3685">3685 WARRIGAL_RD N of HIGHBURY_RD</option>
+          <option value="3804">3804 TRAFALGAR_RD N of RIVERSDALE_RD</option>
+          <option value="3812">3812 TRAFALGAR_RD NE of CAMBERWELL_RD</option>
+          <option value="4030">4030 BURKE_RD S of DONCASTER_RD</option>
+          <option value="4032">4032 BURKE_RD N of HARP_RD</option>
+          <option value="4034">4034 BURKE_RD N OF WHITEHORSE_RD</option>
+          <option value="4035">4035 BURKE_RD N of MONT ALBERT_RD</option>
+          <option value="4040">4040 BURKE_RD N of RIVERSDALE_RD</option>
+          <option value="4043">4043 BURKE_RD N of TOORAK_RD</option>
+          <option value="4051">4051 DONCASTER_RD E of BULLEEN_RD</option>
+          <option value="4057">4057 BALWYN_RD N OF BELMORE_RD</option>
+          <option value="4063">4063 BALWYN_RD N OF WHITEHORSE_RD</option>
+          <option value="4262">4262 BRIDGE_RD SW of BURWOOD_RD</option>
+          <option value="4263">4263 POWER_ST N of BURWOOD_RD</option>
+          <option value="4264">4264 GLENFERRIE_RD N of BURWOOD_RD</option>
+          <option value="4266">4266 BURWOOD_RD E of AUBURN_RD</option>
+          <option value="4270">4270 GLENFERRIE_RD N of RIVERSDALE_RD</option>
+          <option value="4272">4272 RIVERSDALE_RD E of TOORONGA_RD</option>
+          <option value="4273">4273 TOORONGA_RD N of TOORAK_RD</option>
+          <option value="4321">4321 HIGH_ST NE OF HARP_ST</option>
+          <option value="4324">4324 COTHAM_RD E OF GLENFERRIE_RD</option>
+          <option value="4335">4335 HIGH_ST NE of CHARLES_ST</option>
+          <option value="4812">4812 SWAN_ST NE of MADDEN_GV</option>
+          <option value="4821">4821 WALMER_ST N OF VICTORIA_ST</option>
+        </select>
+        <select id="model" name="model">
+          <option value="" disabled selected>Model Options</option>
+          <option value="gru">GRU</option>
+          <option value="lstm">LSTM</option>
+          <option value="saes">SAEs</option>
+          <option value="nn">NN</option>
+        </select>
+        <input type="time" id="time" name="time" />
+        <input type="date" id="date" name="date" />
+
+        <button type="submit" id="calculateRoute">Calculate Routes</button>
+      </div>
+    </form>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="mapscript.js"></script>
+  </body>
+</html>

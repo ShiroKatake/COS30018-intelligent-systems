@@ -1,5 +1,6 @@
 import math
 import sys
+import os
 import json
 import argparse
 from datetime import datetime
@@ -18,6 +19,7 @@ import matplotlib.pyplot as plt
 from map.map import get_routes
 
 warnings.filterwarnings("ignore")
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 file1 = 'data/myData.csv'
 file2 = 'data/myData2.csv'
@@ -308,16 +310,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
+    date_object = datetime.strptime(args.date, "%Y-%m-%d")
+    date = date_object.strftime("%d/%m/%Y")
+
     result = {}
 
     for scat in scat_data:
         lat, long = get_lat_long_from_scats(file1, scat)
 
         # Make prediction
-        flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=args.date, time=time_string_to_minute_of_day(args.time), model=args.model)
-        print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
-        scat_data[scat].flow = flow_prediction
-
+        flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(args.time), model=args.model)
+        # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        scat_data[scat].flow = flow_prediction[0][0]
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
