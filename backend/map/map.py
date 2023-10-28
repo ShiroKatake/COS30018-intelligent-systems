@@ -88,7 +88,7 @@ def get_routes(graph, start_scat_number, end_scat_number):
 
 # Developed by previous COS30018 students (Coulter, Burns, and Henkel)
 def flow_to_speed(flow):
-    A = -1000/32**2     # We assume that the speed at capacity is 32 km/h
+    A = -450/32**2      # We assume that the speed at capacity is 32 km/h
     B = -2 * 32 * A     # and the traffic flow at capacity is 1000 vehicles/hour/lane
 
     # We also assume that the traffic will always be under capacity
