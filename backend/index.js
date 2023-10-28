@@ -45,11 +45,12 @@ const executePython = async (script, args) => {
     const py = spawn("python", [script, ...pyArgs]);
 
     const result = await new Promise((resolve, reject) => {
-        let output;
+        let transformedData;
 
         // Get output from python script
         py.stdout.on("data", (data) => {
-            output = JSON.parse(data);
+            const output = JSON.parse(data);
+            transformedData = processResult(output);
         });
 
         // Handle any error occured
@@ -60,7 +61,7 @@ const executePython = async (script, args) => {
 
         py.on("exit", (code) => {
             console.log(`Child process exited with code ${code}`);
-            resolve(output);
+            resolve(transformedData);
         });
     });
 
@@ -90,4 +91,30 @@ const validateArgs = (arg) => {
     }
 
     return [startScatNumber, endScatNumber, date, timeOfDay, predictionModel];
+}
+
+const processResult = (result) => {
+    // For each route in the result array:
+    const transformedData = result.map((routeResult) => {
+        const directions = [];
+        const latLongRoute = [];
+      
+        // transform the data into 3 parts,
+        routeResult.route.forEach(intersection => {
+            const scatNumber = Object.keys(intersection);
+            const intersectionName = intersection[scatNumber].name;
+
+            // a direction array of scat number and intersection name
+            directions.push({[scatNumber]: intersectionName});
+            // and a lat long route array of each intersection's lat and long
+            latLongRoute.push([intersection[scatNumber].lat, intersection[scatNumber].long]);
+        });
+      
+        return {
+          directions,
+          lat_long_route: latLongRoute,
+          travel_time: routeResult.travel_time
+        };
+    });
+    return transformedData;
 }

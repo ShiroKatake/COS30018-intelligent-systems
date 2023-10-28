@@ -40,7 +40,7 @@ form.addEventListener("submit", async (event) => {
     date: selectedDate,
   };
 
-  const routeInfo = await getRoutes(params);
+  const routeResult = await getRoutes(params);
 
   // Delete old paths
   polylines.forEach((polyline) => {
@@ -61,19 +61,12 @@ form.addEventListener("submit", async (event) => {
   destinationMarker = null;
 
   // Iterate over the routeInfo to return lat and longs of each route
-  routeInfo.forEach((route, index) => {
-    const pathCoordinates = [];
-
-    route.route.forEach((location) => {
-      const [_, value] = Object.entries(location)[0];
-      const lat = value.lat;
-      const lng = value.long;
-      pathCoordinates.push([lat, lng]);
-    });
+  routeResult.forEach((route, index) => {
+    logDirections(route.directions, index);
 
     // Add path, best path set to blue
     const pathColour = index === 0 ? "blue" : "grey";
-    let path = L.polyline(pathCoordinates, { color: pathColour });
+    let path = L.polyline(route.lat_long_route, { color: pathColour });
 
     path.addTo(map);
     polylines.push(path);
@@ -84,25 +77,10 @@ form.addEventListener("submit", async (event) => {
 
     // Put an origin/dest marker on the first path
     if (index === 0) {
-      const firstLocation = route.route[0];
-      const lastLocation = route.route[route.route.length - 1];
+      const markers = placeMarkers(route);
+      originMarker = markers[0];
+      destinationMarker = markers[1];
 
-      // Origin marker
-      originMarker = L.marker([
-        firstLocation[Object.keys(firstLocation)[0]].lat,
-        firstLocation[Object.keys(firstLocation)[0]].long,
-      ])
-        .bindPopup(`SCAT ${Object.keys(firstLocation)[0]}`)
-        .addTo(map);
-
-      // Destination marker
-      destinationMarker = L.marker([
-        lastLocation[Object.keys(lastLocation)[0]].lat,
-        lastLocation[Object.keys(lastLocation)[0]].long,
-      ])
-        .bindPopup(`SCAT ${Object.keys(lastLocation)[0]}`)
-        .addTo(map);
-      
       path.openPopup();
     }
 
@@ -124,3 +102,41 @@ form.addEventListener("submit", async (event) => {
     map.fitBounds(L.featureGroup(polylines).getBounds());
   }
 });
+
+const logDirections = (directions, index) => {
+  // Outputs route number
+  let route = `===== Route ${index + 1} =====`;
+
+  // Outputs intersection's scat number and name in order
+  directions.forEach((direction) => {
+    route += `\n${Object.keys(direction)}: ${direction[Object.keys(direction)]}`;
+  });
+  console.log(route);
+}
+
+// TODO: Go to group therapy
+const placeMarkers = (route) => {
+  const {
+    directions,     // We take directions array because it has scat numbers and names
+    lat_long_route  // We take lat_long_route array because it has lat and long of each intersection
+  } = route;
+
+  // Origin marker
+  originMarker = L.marker([
+    lat_long_route[0][0], // First index of the [lat, long] pair is lat
+    lat_long_route[0][1], // Second index of the [lat, long] pair is long
+  ])
+    .bindPopup(`Origin SCAT ${Object.keys(directions[0])}`) // First index of 'directions' is the origin
+    .addTo(map);
+
+  // Destination marker
+  destinationMarker = L.marker([
+    lat_long_route[lat_long_route.length - 1][0], // First index of the [lat, long] pair is lat
+    lat_long_route[lat_long_route.length - 1][1], // Second index of the [lat, long] pair is long
+  ])
+    .bindPopup(`Destination SCAT ${Object.keys(directions[directions.length - 1])}`)  // Last index of 'directions' is the destination
+    .addTo(map);
+  
+  // Return markers to keep track
+  return [originMarker, destinationMarker];
+}
