@@ -29,8 +29,7 @@ Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
 **Run command below to train the model:**
 
 ```
-python main.py --start_scat <scat value> --end_scat <scat value> --date <dd-mm-yyyy> --time 00:00 --model <model type> or python main.py to use the default values
-
+python train.py --model model_name
 ```
 
 You can choose "lstm", "gru", "rnn" or "saes" as arguments. The ```.h5``` weight file was saved at model folder.
@@ -38,7 +37,7 @@ You can choose "lstm", "gru", "rnn" or "saes" as arguments. The ```.h5``` weight
 **Run command below to run the program:**
 
 ```
-python main.py
+python main.py --start_scat <scat value> --end_scat <scat value> --date <dd-mm-yyyy> --time 00:00 --model <model type> or python main.py to use the default values
 ```
 
 These are the details for the traffic flow prediction experiment.
