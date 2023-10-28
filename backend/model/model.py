@@ -1,15 +1,15 @@
 """
-Defination of NN model
+Defination of RNN model
 """
 from keras.layers import SimpleRNN, Dense, Dropout, Activation, LSTM, GRU
 from keras.models import Sequential
 
-def get_nn(units):
+def get_rnn(units):
     model = Sequential()
     model.add(SimpleRNN(units[1], input_shape=(units[0], 1), return_sequences=True))
     model.add(SimpleRNN(units[2]))
     model.add(Dropout(0.2))
-    model.add(Dense(units[3], activation="sigmoid"))
+    model.add(Dense(units[3], activation="linear"))
     return model
 
 def get_lstm(units):
@@ -19,14 +19,14 @@ def get_lstm(units):
     # Arguments
         units: List(int), number of input, output and hidden units.
     # Returns
-        model: Model, nn model.
+        model: Model, rnn model.
     """
 
     model = Sequential()
     model.add(LSTM(units[1], input_shape=(units[0], 1), return_sequences=True))
     model.add(LSTM(units[2]))
     model.add(Dropout(0.2))
-    model.add(Dense(units[3], activation='sigmoid'))
+    model.add(Dense(units[3], activation='linear'))
 
     return model
 
@@ -38,14 +38,14 @@ def get_gru(units):
     # Arguments
         units: List(int), number of input, output and hidden units.
     # Returns
-        model: Model, nn model.
+        model: Model, rnn model.
     """
 
     model = Sequential()
     model.add(GRU(units[1], input_shape=(units[0], 1), return_sequences=True))
     model.add(GRU(units[2]))
     model.add(Dropout(0.2))
-    model.add(Dense(units[3], activation='sigmoid'))
+    model.add(Dense(units[3], activation='linear'))
 
     return model
 
@@ -59,7 +59,7 @@ def _get_sae(inputs, hidden, output):
         hidden: Integer, number of hidden units.
         output: Integer, number of output units.
     # Returns
-        model: Model, nn model.
+        model: Model, rnn model.
     """
 
     model = Sequential()
@@ -70,7 +70,7 @@ def _get_sae(inputs, hidden, output):
     model.add(Activation('relu'))
 
     model.add(Dropout(0.2))
-    model.add(Dense(output, activation='sigmoid'))
+    model.add(Dense(output, activation='linear'))
 
     return model
 
@@ -90,13 +90,13 @@ def get_saes(layers):
 
     saes = Sequential()
     saes.add(Dense(layers[1], input_dim=layers[0], name='hidden1'))
-    saes.add(Activation('sigmoid'))
+    saes.add(Activation('relu'))
     saes.add(Dense(layers[2], name='hidden2'))
-    saes.add(Activation('sigmoid'))
+    saes.add(Activation('relu'))
     saes.add(Dense(layers[3], name='hidden3'))
-    saes.add(Activation('sigmoid'))
+    saes.add(Activation('relu'))
     saes.add(Dropout(0.2))
-    saes.add(Dense(layers[4], activation='sigmoid'))
+    saes.add(Dense(layers[4], activation='linear'))
 
     models = [sae1, sae2, sae3, saes]
 

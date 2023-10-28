@@ -83,7 +83,7 @@ def plot_results(y_true, y_preds, names):
         names: List, Method names.
     """
     d = '2016-3-4 00:00'
-    x = pd.date_range(d, periods=288, freq='5min')
+    x = pd.date_range(d, periods=96, freq='15min')
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -196,7 +196,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
         'lstm': lstm,
         'gru': gru,
         'saes': saes,
-        'nn': nn
+        'rnn': rnn
     }
 
     # Select the desired model
@@ -223,8 +223,8 @@ def main():
     lstm = load_model('model/lstm.h5')
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
-    nn = load_model('model/nn.h5')
-    models = [lstm, gru, saes, nn]
+    rnn = load_model('model/rnn.h5')
+    models = [lstm, gru, saes, rnn]
     names = ['LSTM', 'GRU', 'SAEs', 'My model']
 
     lag = 12
@@ -254,7 +254,7 @@ def initialise_models():
     global lstm
     global gru
     global saes
-    global nn
+    global rnn
     global flow_scaler
     global lat_scaler
     global long_scaler
@@ -265,7 +265,7 @@ def initialise_models():
     lstm = load_model('model/lstm.h5')
     gru = load_model('model/gru.h5')
     saes = load_model('model/saes.h5')
-    nn = load_model('model/nn.h5')
+    rnn = load_model('model/rnn.h5')
     X_train_global, y_train_global, flow_scaler, lat_scaler, long_scaler = process_data()
     process_data_csv = pd.read_csv('data/ProcessedData.csv', encoding='utf-8').fillna(0)
 
@@ -282,6 +282,61 @@ def time_string_to_minute_of_day(time_str):
     
     return minute_of_day
 
+def get_flow_for_full_day(latitude, longitude, date, model_name):
+    """Generate flow values for the entire day for a given location and model."""
+    flow_values_for_whole_day = []
+    
+    # Starting at 0:00, iterate through the day in 15-minute intervals
+    for minute_of_day in range(0, 1440, 15):  # 1440 minutes in a day
+        predicted_flow = predict_traffic_flow(
+            latitude=latitude,
+            longitude=longitude,
+            date=date,
+            time=minute_of_day,
+            model=model_name
+        )
+        flow_values_for_whole_day.append(predicted_flow)
+    
+    return np.array(flow_values_for_whole_day)
+
+def output_graph(latitude, longitude):
+    # GRAPH OUTPUT SECTION
+
+    # Assuming you want to get the full day's prediction for the location specified by --start_scat
+    latitude, longitude = get_lat_long_from_scats(file1, args.start_scat)
+    
+    # Model names
+    model_names = ['lstm', 'gru', 'saes', 'rnn']
+
+    # Create a list to hold flow values for each model
+    flow_values_per_model = []
+
+    # Iterate over each model and generate predictions
+    for model_name in model_names:
+        full_day_values = get_flow_for_full_day(latitude, longitude, date, model_name)
+        flow_values_per_model.append(full_day_values)
+    
+    # Convert the list of arrays into a single numpy array
+    y_for_graph = np.array(flow_values_per_model)
+    
+    day = date_object.strftime("%A")
+
+    flow_data = process_data_csv[(process_data_csv['NB_LATITUDE'] == latitude) & 
+                             (process_data_csv['NB_LONGITUDE'] == longitude) &
+                             (process_data_csv['Date'] == day)]
+
+    # Extract just the flow values into a list  
+    flow_values = flow_data.iloc[0,3:].tolist() 
+
+    # Initialize array of zeros with 96 entries
+    y_true_data = np.zeros(96)
+
+    # Populate y_true_data array with flow values
+    y_true_data[:len(flow_values)] = flow_values
+
+    plot_results(y_true_data, y_for_graph, model_names)
+
+
 if __name__ == '__main__':
     initialise_models()
     
@@ -297,16 +352,16 @@ if __name__ == '__main__':
         help="End scat number (default 2820).")
     parser.add_argument(
         "--date",
-        default="14/10/2023",
-        help="Date to predict (dd/mm/yyyy).")
+        default="2023-01-01",
+        help="Date to predict (yyyy-mm-dd).")
     parser.add_argument(
         "--time",
         default="16:30",
         help="Time to predict (hh:mm).")
     parser.add_argument(
         "--model",
-        default="nn",
-        help="Model to use for prediction (lstm, gru, saes, nn [default]).")
+        default="rnn",
+        help="Model to use for prediction (lstm, gru, saes, rnn [default]).")
     args = parser.parse_args()
 
     scat_data = get_scats_dict("data/SCATS_SITE_LISTING.csv")
@@ -323,8 +378,12 @@ if __name__ == '__main__':
         # print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction
 
+    output_graph(lat, long)
+
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
     
     print(json.dumps(response))
     sys.stdout.flush()
+
+

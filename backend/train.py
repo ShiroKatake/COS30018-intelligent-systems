@@ -1,5 +1,5 @@
 """
-Train the NN model.
+Train the RNN model.
 """
 import sys
 import warnings
@@ -21,7 +21,7 @@ def train_model(model, X_train, y_train, name, config):
     train a single model.
 
     # Arguments
-        model: Model, NN model to train.
+        model: Model, RNN model to train.
         X_train: ndarray(number, lags), Input data for train.
         y_train: ndarray(number, ), result data for train.
         name: String, name of model.
@@ -88,12 +88,12 @@ def main(argv):
         help="Model to train.")
     args = parser.parse_args()
 
-    config = {"batch": 4096, "epochs": 2}
+    config = {"batch": 256, "epochs": 2}
     x_train, y_train, _, _, _ = process_data()
 
-    if args.model == 'nn':
+    if args.model == 'rnn':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1]))
-        m = model.get_nn([20, 64, 64, 1])
+        m = model.get_rnn([20, 64, 64, 1])
         train_model(m, x_train, y_train, args.model, config)
     if args.model == 'lstm':
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
