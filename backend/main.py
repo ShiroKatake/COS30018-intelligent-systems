@@ -378,7 +378,7 @@ if __name__ == '__main__':
         # print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction
 
-    output_graph(lat, long)
+    # output_graph(lat, long) # TO BE COMMENTED OUT WHEN NOT TESTING
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
