@@ -10,30 +10,26 @@ app.use((_, res, next) => {
     next();
   });
 
-const validateArgs = (arg) => {
-    // Get inputs from frontend"s query strings
-    const startScatNumber = arg.start_scat;
-    const endScatNumber = arg.end_scat;
-    const date = arg.date;
-    const timeOfDay = arg.time;
-    const predictionModel = arg.model;
+app.post("/", async (req, res) => {
+    // Extract and validate the inputs
+    const args = validateArgs(req.query);
 
-    // If inputs are missing, return error to frontend and show missing inputs to backend
-    if (!startScatNumber || !endScatNumber || !date || !timeOfDay || !predictionModel) {
-        const error = new Error("Missing parameters");
-        error.statusCode = 400;
-        console.log({
-            startScatNumber,
-            endScatNumber,
-            date,
-            timeOfDay,
-            predictionModel
-        });
-        throw error;
+    // Execute python script, using the inputs as arguments
+    try {
+        const result = await executePython("main.py", args);
+        res.json(result);
+    } catch (error) {
+        if (error.statusCode) {
+            res.status(error.statusCode).send(error.message);
+        }
+
+        res.status(500).json({ error: error.message });
     }
+});
 
-    return [startScatNumber, endScatNumber, date, timeOfDay, predictionModel];
-}
+app.listen(3001, () => {
+    console.log("[server] Application started!")
+});
 
 const executePython = async (script, args) => {
     // Get args
@@ -71,23 +67,27 @@ const executePython = async (script, args) => {
     return result;
 }
 
-app.post("/", async (req, res) => {
-    // Extract and validate the inputs
-    const args = validateArgs(req.query);
+const validateArgs = (arg) => {
+    // Get inputs from frontend"s query strings
+    const startScatNumber = arg.start_scat;
+    const endScatNumber = arg.end_scat;
+    const date = arg.date;
+    const timeOfDay = arg.time;
+    const predictionModel = arg.model;
 
-    // Execute python script, using the inputs as arguments
-    try {
-        const result = await executePython("main.py", args);
-        res.json(result);
-    } catch (error) {
-        if (error.statusCode) {
-            res.status(error.statusCode).send(error.message);
-        }
-
-        res.status(500).json({ error: error.message });
+    // If inputs are missing, return error to frontend and show missing inputs to backend
+    if (!startScatNumber || !endScatNumber || !date || !timeOfDay || !predictionModel) {
+        const error = new Error("Missing parameters");
+        error.statusCode = 400;
+        console.log({
+            startScatNumber,
+            endScatNumber,
+            date,
+            timeOfDay,
+            predictionModel
+        });
+        throw error;
     }
-});
 
-app.listen(3001, () => {
-    console.log("[server] Application started!")
-});
+    return [startScatNumber, endScatNumber, date, timeOfDay, predictionModel];
+}
