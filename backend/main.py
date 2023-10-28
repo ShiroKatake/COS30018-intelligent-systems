@@ -205,7 +205,7 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
         raise ValueError(f"Unsupported model: {model}")
 
     # Predict using the selected model
-    predicted = selected_model.predict(x_test)
+    predicted = selected_model.predict(x_test, verbose=None)
 
     # setting up the shape
     predicted_structure = np.zeros(shape=(len(predicted), 12))
@@ -320,8 +320,8 @@ if __name__ == '__main__':
 
         # Make prediction
         flow_prediction = predict_traffic_flow(latitude=lat, longitude=long, date=date, time=time_string_to_minute_of_day(args.time), model=args.model)
-        # print(f'{scat}: {flow_prediction[0][0]}') # TO BE COMMENTED OUT WHEN NOT TESTING
-        scat_data[scat].flow = flow_prediction[0][0]
+        # print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
+        scat_data[scat].flow = flow_prediction
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
