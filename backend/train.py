@@ -88,7 +88,7 @@ def main(argv):
         help="Model to train.")
     args = parser.parse_args()
 
-    config = {"batch": 256, "epochs": 50}
+    config = {"batch": 1, "epochs": 1}
     x_train, y_train, _, _, _ = process_data()
 
     if args.model == 'rnn':
