@@ -1,8 +1,6 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-import csv
+from sklearn.preprocessing import StandardScaler
 import numpy as np
-
 
 timeInterval = 15
 
@@ -42,26 +40,6 @@ def get_scats_dict(file_path):
 
     return scats_neighbours_dict
 
-def get_all_scats_points(filename):
-    unique_values = []
-    with open(filename, 'r') as csvfile:
-        csvreader = csv.reader(csvfile)
-
-        # Skip the first row (header)
-        next(csvreader)
-        
-        # Iterate through each row in the CSV
-        for row in csvreader:
-            if row:  # Check if the row is not empty
-                # Extract the value from the first column
-                value = row[0]
-                
-                # Check if the value is not already in the list
-                if value not in unique_values:
-                    unique_values.append(value)
-    print(unique_values)
-    return unique_values
-
 def get_lat_long_from_scats(data, scats):
     # Read data
     df = pd.read_csv(data, encoding='utf-8').fillna(0)
@@ -94,9 +72,9 @@ def process_data(lags=12):
     df = pd.concat(list_of_transformed_dfs).reset_index(drop=True)
 
     #Get the position of the first time column in the CSV
-    columnPositionOfTimeColumn = df.columns.get_loc("V00")
+    column_position_of_time_column = df.columns.get_loc("V00")
 
-    flow1 = df.to_numpy()[:, columnPositionOfTimeColumn:]
+    flow1 = df.to_numpy()[:, column_position_of_time_column:]
 
     flow_scaler = StandardScaler()
     # Select the columns to be scaled (from 'V00' to the last column)
@@ -134,17 +112,9 @@ def process_data(lags=12):
 
     train = np.array(df)
     np.random.shuffle(train)
-    X_train = train[:, :-1]
+    x_train = train[:, :-1]
     y_train = train[:, -1]
-    return X_train, y_train, flow_scaler, lat_scaler, long_scaler
-
-
-
-
-
-
-
-
+    return x_train, y_train, flow_scaler, lat_scaler, long_scaler
 
 def transform_group(group, lags=3):
     """Transforms a single group of data with a variable number of VXX columns, handling a full month of dates."""
@@ -175,8 +145,3 @@ def transform_group(group, lags=3):
     
     columns = ['NB_LATITUDE', 'NB_LONGITUDE', 'Date'] + ['V{:02}'.format(i) for i in range(lags)]
     return pd.DataFrame(transformed_rows, columns=columns)
-
-# def sort_transformed_data(df, num_v_columns=3):
-#     """Sorts the transformed data based on the last V column."""
-#     last_v_column = 'V{:02}'.format(num_v_columns - 1)
-#     return df.sort_values(by=['NB_LATITUDE', 'NB_LONGITUDE', 'Date', last_v_column])

@@ -1,4 +1,3 @@
-import math
 import sys
 import os
 import json
@@ -9,10 +8,8 @@ import numpy as np
 import pandas as pd
 from data.data import process_data
 from data.data import get_scats_dict
-from data.data import get_lat_long_from_scats, get_all_scats_points
+from data.data import get_lat_long_from_scats
 from keras.models import load_model
-from keras.utils import plot_model
-import sklearn.metrics as metrics
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -22,56 +19,7 @@ warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 file1 = 'data/myData.csv'
-file2 = 'data/myData2.csv'
 timeInterval = 15
-
-
-def MAPE(y_true, y_pred):
-    """Mean Absolute Percentage Error
-    Calculate the mape.
-
-    # Arguments
-        y_true: List/ndarray, ture data.
-        y_pred: List/ndarray, predicted data.
-    # Returns
-        mape: Double, result data for train.
-    """
-
-    y = [x for x in y_true if x > 0]
-    y_pred = [y_pred[i] for i in range(len(y_true)) if y_true[i] > 0]
-
-    num = len(y_pred)
-    sums = 0
-
-    for i in range(num):
-        tmp = abs(y[i] - y_pred[i]) / y[i]
-        sums += tmp
-
-    mape = sums * (100 / num)
-
-    return mape
-
-def eva_regress(y_true, y_pred):
-    """Evaluation
-    evaluate the predicted resul.
-
-    # Arguments
-        y_true: List/ndarray, ture data.
-        y_pred: List/ndarray, predicted data.
-    """
-
-    mape = MAPE(y_true, y_pred)
-    vs = metrics.explained_variance_score(y_true, y_pred)
-    mae = metrics.mean_absolute_error(y_true, y_pred)
-    mse = metrics.mean_squared_error(y_true, y_pred)
-    r2 = metrics.r2_score(y_true, y_pred)
-    print('explained_variance_score:%f' % vs)
-    print('mape:%f%%' % mape)
-    print('mae:%f' % mae)
-    print('mse:%f' % mse)
-    print('rmse:%f' % math.sqrt(mse))
-    print('r2:%f' % r2)
-
 
 def plot_results(y_true, y_preds, names):
     """Plot
@@ -217,39 +165,6 @@ def predict_traffic_flow(latitude, longitude, time, date, model):
 
     return final_prediction
 
-
-# Just temporarily this isnt doing anything
-def main():
-    lstm = load_model('model/lstm.h5')
-    gru = load_model('model/gru.h5')
-    saes = load_model('model/saes.h5')
-    rnn = load_model('model/rnn.h5')
-    models = [lstm, gru, saes, rnn]
-    names = ['LSTM', 'GRU', 'SAEs', 'My model']
-
-    lag = 12
-    file1 = 'data/train.csv'
-    file2 = 'data/test.csv'
-    _, _, X_test, y_test, scaler = process_data(file1, file2, lag)
-    y_test = scaler.inverse_transform(y_test.reshape(-1, 1)).reshape(1, -1)[0]
-
-    y_preds = []
-    for name, model in zip(names, models):
-        if name == 'SAEs' or name == 'My model':
-            X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
-        else:
-            X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-        file = 'images/' + name + '.png'
-        plot_model(model, to_file=file, show_shapes=True)
-        predicted = model.predict(X_test)
-        predicted = scaler.inverse_transform(predicted.reshape(-1, 1)).reshape(1, -1)[0]
-        y_preds.append(predicted[:288])
-        print(name)
-        eva_regress(y_test, predicted)
-
-    plot_results(y_test[: 288], y_preds, names)
-
-
 def initialise_models():
     global lstm
     global gru
@@ -299,7 +214,7 @@ def get_flow_for_full_day(latitude, longitude, date, model_name):
     
     return np.array(flow_values_for_whole_day)
 
-def output_graph(latitude, longitude):
+def output_graph():
     # GRAPH OUTPUT SECTION
 
     # Assuming you want to get the full day's prediction for the location specified by --start_scat
@@ -378,12 +293,10 @@ if __name__ == '__main__':
         # print(f'{scat}: {flow_prediction}') # TO BE COMMENTED OUT WHEN NOT TESTING
         scat_data[scat].flow = flow_prediction
 
-    # output_graph(lat, long) # TO BE COMMENTED OUT WHEN NOT TESTING
+    output_graph() # TO BE COMMENTED OUT WHEN NOT TESTING
 
     routes = get_routes(scat_data, args.start_scat, args.end_scat)
     response = routes
     
     print(json.dumps(response))
     sys.stdout.flush()
-
-

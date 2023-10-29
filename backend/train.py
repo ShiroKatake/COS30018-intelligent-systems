@@ -10,9 +10,6 @@ from data.data import process_data
 from model import model
 from keras.models import Model
 from keras.optimizers import SGD
-from keras.callbacks import EarlyStopping
-from main import file1
-from main import file2
 
 warnings.filterwarnings("ignore")
 
@@ -79,7 +76,6 @@ def train_seas(models, X_train, y_train, name, config):
 
     train_model(saes, X_train, y_train, name, config)
 
-
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -107,7 +103,6 @@ def main(argv):
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1]))
         m = model.get_saes([20, 400, 400, 400, 1])
         train_seas(m, x_train, y_train, args.model, config)
-
 
 if __name__ == '__main__':
     main(sys.argv)
